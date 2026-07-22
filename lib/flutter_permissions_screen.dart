@@ -11,7 +11,7 @@ class OnboardingPermissionsScreen extends StatefulWidget {
   State<OnboardingPermissionsScreen> createState() => _OnboardingPermissionsScreenState();
 }
 
-class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScreen> {
+class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScreen> with WidgetsBindingObserver {
   bool _notificationGranted = false;
   bool _batteryGranted = false;
   bool _isChecking = true;
@@ -19,7 +19,21 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkCurrentPermissions();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkCurrentPermissions();
+    }
   }
 
   Future<void> _checkCurrentPermissions() async {
@@ -40,27 +54,43 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
   }
 
   Future<void> _requestNotification() async {
-    final status = await Permission.notification.request();
-    if (mounted) {
-      setState(() {
-        _notificationGranted = status.isGranted;
-      });
+    final status = await Permission.notification.status;
+    if (status.isPermanentlyDenied) {
+      await openAppSettings();
+    } else {
+      final result = await Permission.notification.request();
+      if (result.isPermanentlyDenied) {
+        await openAppSettings();
+      }
     }
+    await _checkCurrentPermissions();
   }
 
   Future<void> _requestBatteryOptimization() async {
     if (Platform.isAndroid) {
-      final status = await Permission.ignoreBatteryOptimizations.request();
-      if (mounted) {
-        setState(() {
-          _batteryGranted = status.isGranted;
-        });
+      final status = await Permission.ignoreBatteryOptimizations.status;
+      if (status.isPermanentlyDenied) {
+        await openAppSettings();
+      } else {
+        final result = await Permission.ignoreBatteryOptimizations.request();
+        if (result.isPermanentlyDenied) {
+          await openAppSettings();
+        }
       }
+      await _checkCurrentPermissions();
     }
+  }
+
+  bool get _allPermissionsGranted {
+    if (!_notificationGranted) return false;
+    if (Platform.isAndroid && !_batteryGranted) return false;
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
+    final canContinue = _allPermissionsGranted;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       body: SafeArea(
@@ -128,7 +158,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                 if (Platform.isAndroid) ...[
                   _buildPermissionCard(
                     title: "Unrestricted Battery Saver",
-                    description: "Allows background sync to check for timetable updates reliable in the background.",
+                    description: "Allows background sync to check for timetable updates reliably in the background.",
                     icon: Icons.battery_saver_rounded,
                     isGranted: _batteryGranted,
                     onPressed: _requestBatteryOptimization,
@@ -141,18 +171,19 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: widget.onCompleted,
+                  onPressed: canContinue ? widget.onCompleted : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: canContinue ? const Color(0xFF6366F1) : const Color(0xFF334155),
+                    disabledBackgroundColor: const Color(0xFF1E293B),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    elevation: 4,
+                    elevation: canContinue ? 4 : 0,
                   ),
-                  child: const Text(
+                  child: Text(
                     "Continue to App",
                     style: TextStyle(
-                      color: Colors.white,
+                      color: canContinue ? Colors.white : const Color(0xFF64748B),
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

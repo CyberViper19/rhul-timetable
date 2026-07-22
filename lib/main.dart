@@ -8,6 +8,7 @@ import 'flutter_auth_keystore.dart';
 
 import 'flutter_background_sync.dart';
 import 'flutter_permissions_screen.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -1099,7 +1100,7 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   final _cacheManager = TimetableCacheManager();
 
   bool _cancellations = true;
@@ -1107,6 +1108,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _reschedules = true;
   bool _assessmentReminders = true;
   List<int> _reminderHours = [1, 24];
+
+  bool _notificationGranted = false;
+  bool _batteryGranted = false;
 
   final List<Map<String, dynamic>> _availableIntervals = [
     {'label': '1 hour before', 'hours': 1},
@@ -1120,7 +1124,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadSettings();
+    _loadSystemPermissions();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadSystemPermissions();
+    }
+  }
+
+  Future<void> _loadSystemPermissions() async {
+    final notifStatus = await Permission.notification.status;
+    bool batteryStatus = true;
+    if (!kIsWeb && Platform.isAndroid) {
+      final status = await Permission.ignoreBatteryOptimizations.status;
+      batteryStatus = status.isGranted;
+    }
+
+    if (mounted) {
+      setState(() {
+        _notificationGranted = notifStatus.isGranted;
+        _batteryGranted = batteryStatus;
+      });
+    }
   }
 
   void _loadSettings() {
@@ -1306,6 +1341,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
+          const SizedBox(height: 24),
+          // Section Header: System Permissions
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              "SYSTEM PERMISSIONS & BACKGROUND SYNC",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+                color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+              ),
+            ),
+          ),
+          Card(
+            color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
+              ),
+            ),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(useIOSStyle ? CupertinoIcons.bell : Icons.notifications_none_rounded, color: primaryColor),
+                  title: const Text("System Push Notifications", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  subtitle: Text(
+                    _notificationGranted ? "Permission Granted" : "Permission Denied (Notifications Disabled)",
+                    style: TextStyle(color: _notificationGranted ? const Color(0xFF10B981) : const Color(0xFFEF4444), fontSize: 12),
+                  ),
+                  trailing: TextButton(
+                    onPressed: () async {
+                      if (_notificationGranted) {
+                        await openAppSettings();
+                      } else {
+                        final res = await Permission.notification.request();
+                        if (res.isPermanentlyDenied) {
+                          await openAppSettings();
+                        }
+                      }
+                      await _loadSystemPermissions();
+                    },
+                    child: Text(_notificationGranted ? "Manage" : "Enable", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                if (!kIsWeb && Platform.isAndroid) ...[
+                  const Divider(height: 1, color: Color(0xFF334155)),
+                  ListTile(
+                    leading: Icon(useIOSStyle ? CupertinoIcons.battery_charging : Icons.battery_saver_rounded, color: const Color(0xFF10B981)),
+                    title: const Text("Unrestricted Battery Optimization", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      _batteryGranted ? "Unrestricted (Background Sync active)" : "Optimized (Sync may be delayed by OS)",
+                      style: TextStyle(color: _batteryGranted ? const Color(0xFF10B981) : const Color(0xFFF59E0B), fontSize: 12),
+                    ),
+                    trailing: TextButton(
+                      onPressed: () async {
+                        if (_batteryGranted) {
+                          await openAppSettings();
+                        } else {
+                          final res = await Permission.ignoreBatteryOptimizations.request();
+                          if (res.isPermanentlyDenied) {
+                            await openAppSettings();
+                          }
+                        }
+                        await _loadSystemPermissions();
+                      },
+                      child: Text(_batteryGranted ? "Manage" : "Disable", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
       ),
     );
