@@ -501,41 +501,28 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         ),
       );
     } else {
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-        ),
-                    blurRadius: 12,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [],
-        ),
-        child: TextField(
-          controller: controller,
-          focusNode: focusNode,
-          obscureText: isObscure,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            labelText: label,
-            hintText: placeholder,
-            hintStyle: const TextStyle(color: Color(0xFF64748B)),
-            labelStyle: TextStyle(color: isFocused ? accentColor : const Color(0xFF94A3B8)),
-            prefixIcon: Icon(icon, color: isFocused ? accentColor : const Color(0xFF64748B)),
-            suffixIcon: suffix,
-            filled: true,
-            fillColor: isFocused ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFF334155)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: BorderSide(color: accentColor, width: 2),
-            ),
+      return TextField(
+        controller: controller,
+        focusNode: focusNode,
+        obscureText: isObscure,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: placeholder,
+          hintStyle: const TextStyle(color: Color(0xFF64748B)),
+          labelStyle: TextStyle(color: isFocused ? accentColor : const Color(0xFF94A3B8)),
+          prefixIcon: Icon(icon, color: isFocused ? accentColor : const Color(0xFF64748B)),
+          suffixIcon: suffix,
+          filled: true,
+          fillColor: isFocused ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFF334155)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: accentColor, width: 2),
           ),
         ),
       );

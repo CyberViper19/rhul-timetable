@@ -212,62 +212,87 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                   ),
                 ),
                 const SizedBox(height: 8),
-                Card(
-                  color: const Color(0xFF1E293B),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: const BorderSide(color: Color(0xFF334155)),
-                  ),
-                  child: Column(
-                    children: [
-                      SwitchListTile(
-                        activeColor: const Color(0xFF6366F1),
-                        title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: const Text("Notify if a lecture is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                        secondary: const Icon(Icons.notifications_active_rounded, color: Color(0xFF6366F1), size: 20),
-                        value: _cancellations,
-                        onChanged: (val) => setState(() => _cancellations = val),
-                      ),
-                      const Divider(height: 1, color: Color(0xFF334155)),
-                      SwitchListTile(
-                        activeColor: const Color(0xFF6366F1),
-                        title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: const Text("Notify when a class moves rooms", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                        secondary: const Icon(Icons.location_on_rounded, color: Color(0xFF6366F1), size: 20),
-                        value: _roomChanges,
-                        onChanged: (val) => setState(() => _roomChanges = val),
-                      ),
-                      const Divider(height: 1, color: Color(0xFF334155)),
-                      SwitchListTile(
-                        activeColor: const Color(0xFF6366F1),
-                        title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: const Text("Notify when class times change", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                        secondary: const Icon(Icons.access_time_filled_rounded, color: Color(0xFF6366F1), size: 20),
-                        value: _reschedules,
-                        onChanged: (val) => setState(() => _reschedules = val),
-                      ),
-                      const Divider(height: 1, color: Color(0xFF334155)),
-                      SwitchListTile(
-                        activeColor: const Color(0xFF6366F1),
-                        title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                        subtitle: const Text("Receive countdown reminders for assessments", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                        secondary: const Icon(Icons.assignment_rounded, color: Color(0xFFF59E0B), size: 20),
-                        value: _assessmentReminders,
-                        onChanged: (val) => setState(() => _assessmentReminders = val),
-                      ),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF0F172A),
-                          borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+                Opacity(
+                  opacity: _notificationGranted ? 1.0 : 0.6,
+                  child: Card(
+                    color: const Color(0xFF1E293B),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: const BorderSide(color: Color(0xFF334155)),
+                    ),
+                    child: Column(
+                      children: [
+                        SwitchListTile(
+                          activeColor: const Color(0xFF6366F1),
+                          title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          subtitle: const Text("Notify if a lecture is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                          secondary: Icon(Icons.notifications_active_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                          value: _notificationGranted && _cancellations,
+                          onChanged: _notificationGranted ? (val) => setState(() => _cancellations = val) : null,
                         ),
-                        child: const Text(
-                          "ℹ️ You can change or customize all of these choices anytime later in Settings.",
-                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                        const Divider(height: 1, color: Color(0xFF334155)),
+                        SwitchListTile(
+                          activeColor: const Color(0xFF6366F1),
+                          title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          subtitle: const Text("Notify when a class moves rooms", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                          secondary: Icon(Icons.location_on_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                          value: _notificationGranted && _roomChanges,
+                          onChanged: _notificationGranted ? (val) => setState(() => _roomChanges = val) : null,
                         ),
-                      ),
-                    ],
+                        const Divider(height: 1, color: Color(0xFF334155)),
+                        SwitchListTile(
+                          activeColor: const Color(0xFF6366F1),
+                          title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          subtitle: const Text("Notify when class times change", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                          secondary: Icon(Icons.access_time_filled_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                          value: _notificationGranted && _reschedules,
+                          onChanged: _notificationGranted ? (val) => setState(() => _reschedules = val) : null,
+                        ),
+                        const Divider(height: 1, color: Color(0xFF334155)),
+                        SwitchListTile(
+                          activeColor: const Color(0xFF6366F1),
+                          title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                          subtitle: const Text("Receive countdown reminders for assessments", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                          secondary: Icon(Icons.assignment_rounded, color: _notificationGranted ? const Color(0xFFF59E0B) : const Color(0xFF64748B), size: 20),
+                          value: _notificationGranted && _assessmentReminders,
+                          onChanged: _notificationGranted ? (val) => setState(() => _assessmentReminders = val) : null,
+                        ),
+                        if (!_notificationGranted)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF1E1B4B),
+                              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.lock_rounded, color: Color(0xFFF59E0B), size: 14),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Allow 'Push Notifications' above to enable these alert preferences.",
+                                    style: TextStyle(color: Color(0xFFA5B4FC), fontSize: 11, fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF0F172A),
+                              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+                            ),
+                            child: const Text(
+                              "ℹ️ You can change or customize all of these choices anytime later in Settings.",
+                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
