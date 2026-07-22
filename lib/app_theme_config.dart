@@ -15,6 +15,8 @@ class AppThemeConfig {
   final Color assessmentColor;
   final Color optionalColor;
   final Color lectureColor;
+  final Color tutorialColor;
+  final Color practicalColor;
 
   const AppThemeConfig({
     required this.key,
@@ -30,6 +32,8 @@ class AppThemeConfig {
     required this.assessmentColor,
     required this.optionalColor,
     required this.lectureColor,
+    required this.tutorialColor,
+    required this.practicalColor,
   });
 
   static AppThemeConfig getTheme(String key, Brightness systemBrightness) {
@@ -49,6 +53,8 @@ class AppThemeConfig {
           assessmentColor: Color(0xFFF59E0B),
           optionalColor: Color(0xFF10B981),
           lectureColor: Color(0xFF6366F1),
+          tutorialColor: Color(0xFF8B5CF6),
+          practicalColor: Color(0xFF06B6D4),
         );
       case 'system':
         return systemBrightness == Brightness.dark ? _darkTheme : _lightTheme;
@@ -71,6 +77,8 @@ class AppThemeConfig {
           assessmentColor: Color(0xFFFF9500),
           optionalColor: Color(0xFF30D158),
           lectureColor: Color(0xFF0A84FF),
+          tutorialColor: Color(0xFFBF5AF2),
+          practicalColor: Color(0xFF64D2FF),
         );
       case 'rhul':
       default:
@@ -88,6 +96,8 @@ class AppThemeConfig {
           assessmentColor: Color(0xFFF97316), // Royal Holloway Orange for Assessments
           optionalColor: Color(0xFF10B981),
           lectureColor: Color(0xFF3B82F6), // Blue for Lectures
+          tutorialColor: Color(0xFFA855F7), // Purple for Tutorials/Workshops
+          practicalColor: Color(0xFF06B6D4), // Cyan for Practicals/Labs
         );
     }
   }
@@ -106,6 +116,8 @@ class AppThemeConfig {
     assessmentColor: Color(0xFFF97316),
     optionalColor: Color(0xFF10B981),
     lectureColor: Color(0xFF3B82F6),
+    tutorialColor: Color(0xFFA855F7),
+    practicalColor: Color(0xFF06B6D4),
   );
 
   static const AppThemeConfig _lightTheme = AppThemeConfig(
@@ -122,5 +134,7 @@ class AppThemeConfig {
     assessmentColor: Color(0xFFE55B13),
     optionalColor: Color(0xFF059669),
     lectureColor: Color(0xFF2563EB),
+    tutorialColor: Color(0xFF7C3AED),
+    practicalColor: Color(0xFF0891B2),
   );
 }

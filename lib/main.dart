@@ -575,6 +575,24 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
       return activeTheme.assessmentColor;
     }
 
+    // Practicals / Labs -> Cyan/Practical Color
+    if (lower.contains('practical') ||
+        lower.contains('lab') ||
+        lower.contains('laboratory') ||
+        lower.contains('pc lab') ||
+        lower.contains('computer lab')) {
+      return activeTheme.practicalColor;
+    }
+
+    // Tutorials / Seminars / Workshops -> Purple/Tutorial Color
+    if (lower.contains('tutorial') ||
+        lower.contains('workshop') ||
+        lower.contains('seminar') ||
+        lower.contains('group work') ||
+        lower.contains('class')) {
+      return activeTheme.tutorialColor;
+    }
+
     // Optional Attendance / Drop ins -> Green/Optional Color
     if (lower.contains('optional') ||
         lower.contains('drop') ||
@@ -586,7 +604,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
       return activeTheme.optionalColor;
     }
 
-    // Default / Regular Classes -> Lecture Color
+    // Default / Regular Lectures -> Lecture Color
     return activeTheme.lectureColor;
   }
 
