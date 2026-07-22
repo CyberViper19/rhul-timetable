@@ -119,7 +119,7 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
 
   void _initMapWebView() {
     final building = _resolveRHULBuilding(widget.event.location);
-    final String query = "${building.canonicalName}, Royal Holloway University of London, Egham, TW20 0EX";
+    final String query = "${building.canonicalName} egham";
     final String mapsEmbedUrl = "https://maps.google.com/maps?q=${Uri.encodeComponent(query)}&t=&z=17&ie=UTF8&iwloc=&output=embed";
 
     final htmlContent = '''
@@ -167,7 +167,7 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
     }
 
     final building = _resolveRHULBuilding(widget.event.location);
-    final String query = "${building.canonicalName}, Royal Holloway University of London, Egham, TW20 0EX";
+    final String query = "${building.canonicalName} egham";
     final Uri googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}");
 
     try {
