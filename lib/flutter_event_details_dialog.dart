@@ -7,6 +7,13 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'flutter_timetable_model.dart';
 
+class RHULBuildingInfo {
+  final String canonicalName;
+  final LatLng coordinates;
+
+  const RHULBuildingInfo(this.canonicalName, this.coordinates);
+}
+
 class EventDetailsModalSheet extends StatelessWidget {
   final TimetableEvent event;
   final Color typeColor;
@@ -17,76 +24,81 @@ class EventDetailsModalSheet extends StatelessWidget {
     required this.typeColor,
   });
 
-  LatLng _getBuildingCoordinates(String location) {
+  RHULBuildingInfo _resolveRHULBuilding(String location) {
     final loc = location.toLowerCase();
 
-    // Founders Building & Picture Gallery
+    // 1. Founder's Building
     if (loc.contains('founder') || loc.contains('fndr') || loc.contains('fnd') || loc.contains('picture') || loc.contains('crossland') || loc.contains('boiler')) {
-      return const LatLng(51.4254, -0.5636);
+      return const RHULBuildingInfo("Founder's Building", LatLng(51.4254, -0.5636));
     }
-    // Windsor Building & Auditorium
-    if (loc.contains('windsor') || loc.contains('win') || loc.contains('auditorium')) {
-      return const LatLng(51.4248, -0.5631);
-    }
-    // Emily Wilding Davison Building & Library
+    // 2. Emily Wilding Davison Building
     if (loc.contains('davison') || loc.contains('ewd') || loc.contains('library')) {
-      return const LatLng(51.4243, -0.5645);
+      return const RHULBuildingInfo("Emily Wilding Davison Building", LatLng(51.4243, -0.5645));
     }
-    // Shilling Building
-    if (loc.contains('shilling') || loc.contains('shil') || loc.startsWith('sh')) {
-      return const LatLng(51.4262, -0.5620);
-    }
-    // Moore Building
+    // 3. Moore Building
     if (loc.contains('moore') || loc.contains('mr') || loc.startsWith('mr-')) {
-      return const LatLng(51.4242, -0.5619);
+      return const RHULBuildingInfo("Moore Building", LatLng(51.4242, -0.5619));
     }
-    // Bourne Building & Lecture Theatre (BLT)
-    if (loc.contains('bourne') || loc.contains('brn') || loc.contains('blt')) {
-      return const LatLng(51.4265, -0.5615);
+    // 4. International Building
+    if (loc.contains('international') || loc.contains('inter') || loc.contains('intl') || loc.contains('ib')) {
+      return const RHULBuildingInfo("International Building", LatLng(51.4250, -0.5628));
     }
-    // Queens Building
-    if (loc.contains('queen') || loc.contains('qns') || loc.contains('qn')) {
-      return const LatLng(51.4268, -0.5608);
-    }
-    // McCrea Building
-    if (loc.contains('mccrea') || loc.contains('mc') || loc.contains('mcc')) {
-      return const LatLng(51.4257, -0.5625);
-    }
-    // International Building
-    if (loc.contains('international') || loc.contains('intl') || loc.contains('ib')) {
-      return const LatLng(51.4250, -0.5628);
-    }
-    // Bedford Building
+    // 5. Bedford Building
     if (loc.contains('bedford') || loc.contains('bed')) {
-      return const LatLng(51.4260, -0.5610);
+      return const RHULBuildingInfo("Bedford Building", LatLng(51.4260, -0.5610));
     }
-    // Arts Building
+    // 6. Wolfson Building
+    if (loc.contains('wolfson') || loc.contains('wolf')) {
+      return const RHULBuildingInfo("Wolfson Building", LatLng(51.4252, -0.5622));
+    }
+    // 7. McCrea Building
+    if (loc.contains('mccrea') || loc.contains('mc') || loc.contains('mcc')) {
+      return const RHULBuildingInfo("McCrea Building", LatLng(51.4257, -0.5625));
+    }
+    // 8. Katherine Worth Building
+    if (loc.contains('katherine') || loc.contains('worth') || loc.contains('kw')) {
+      return const RHULBuildingInfo("Katherine Worth Building", LatLng(51.4245, -0.5650));
+    }
+    // 9. Arts Building
     if (loc.contains('arts') || loc.contains('art') || loc.startsWith('a-')) {
-      return const LatLng(51.4253, -0.5640);
+      return const RHULBuildingInfo("Arts Building", LatLng(51.4253, -0.5640));
     }
-    // Wetton's Annex
-    if (loc.contains('wetton') || loc.contains('wet')) {
-      return const LatLng(51.4270, -0.5638);
+    // 10. Windsor Building
+    if (loc.contains('windsor') || loc.contains('win') || loc.contains('aud')) {
+      return const RHULBuildingInfo("Windsor Building", LatLng(51.4248, -0.5631));
     }
-    // Horton Building
-    if (loc.contains('horton') || loc.contains('hort')) {
-      return const LatLng(51.4259, -0.5618);
+    // 11. Bourne Building
+    if (loc.contains('bourne') || loc.contains('brn') || loc.contains('blt')) {
+      return const RHULBuildingInfo("Bourne Building", LatLng(51.4265, -0.5615));
     }
-    // Tolansky Building
-    if (loc.contains('tolansky') || loc.contains('tol')) {
-      return const LatLng(51.4264, -0.5612);
-    }
-    // Munro Fox
+    // 12. Munro Fox Building
     if (loc.contains('munro') || loc.contains('fox') || loc.contains('mf')) {
-      return const LatLng(51.4266, -0.5618);
+      return const RHULBuildingInfo("Munro Fox Building", LatLng(51.4266, -0.5618));
     }
-    // Sports Centre / Gym / Sports Hall
-    if (loc.contains('sport') || loc.contains('gym')) {
-      return const LatLng(51.4235, -0.5655);
+    // 13. Beatrice Schilling Building
+    if (loc.contains('schilling') || loc.contains('beatrice') || loc.contains('shil') || loc.startsWith('sh')) {
+      return const RHULBuildingInfo("Beatrice Schilling Building", LatLng(51.4262, -0.5620));
+    }
+    // 14. Horton Building
+    if (loc.contains('horton') || loc.contains('hort')) {
+      return const RHULBuildingInfo("Horton Building", LatLng(51.4259, -0.5618));
+    }
+    // 15. Tolansky Building
+    if (loc.contains('tolansky') || loc.contains('tol')) {
+      return const RHULBuildingInfo("Tolansky Building", LatLng(51.4264, -0.5612));
+    }
+    // 16. Queen's Building
+    if (loc.contains('queen') || loc.contains('qns') || loc.contains('qn')) {
+      return const RHULBuildingInfo("Queen's Building", LatLng(51.4268, -0.5608));
+    }
+    // 17. Wetton's Terrace
+    if (loc.contains('wetton') || loc.contains('wet')) {
+      return const RHULBuildingInfo("Wetton's Terrace", LatLng(51.4270, -0.5638));
     }
 
-    // Default RHUL Campus Center
-    return const LatLng(51.4256, -0.5631);
+    // Fallback: Default RHUL Campus Center
+    final cleanName = location.split('-').first.trim();
+    return RHULBuildingInfo("$cleanName Building", const LatLng(51.4256, -0.5631));
   }
 
   bool get _isOnline => event.location.toLowerCase().contains('online');
@@ -102,9 +114,9 @@ class EventDetailsModalSheet extends StatelessWidget {
       return;
     }
 
-    final coords = _getBuildingCoordinates(event.location);
-    final String cleanLoc = event.location.replaceAll('-', ' ');
-    final Uri googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}+(${Uri.encodeComponent('$cleanLoc, Royal Holloway University')})");
+    final building = _resolveRHULBuilding(event.location);
+    final String query = "${building.canonicalName}, Royal Holloway University of London, Egham, TW20 0EX";
+    final Uri googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}");
 
     try {
       final launched = await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
@@ -127,7 +139,8 @@ class EventDetailsModalSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
-    final coords = _getBuildingCoordinates(event.location);
+    final building = _resolveRHULBuilding(event.location);
+    final coords = building.coordinates;
 
     return Container(
       decoration: BoxDecoration(
@@ -218,7 +231,7 @@ class EventDetailsModalSheet extends StatelessWidget {
                     _buildDetailRow(
                       icon: useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
                       title: "Location",
-                      value: event.location,
+                      value: _isOnline ? "Online Lecture" : "${building.canonicalName} (${event.location})",
                       iconColor: const Color(0xFF10B981),
                     ),
                     if (event.staff.isNotEmpty) ...[
