@@ -586,8 +586,8 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
       return activeTheme.optionalColor;
     }
 
-    // Default / Regular Classes -> Accent/Secondary Color
-    return activeTheme.secondaryColor;
+    // Default / Regular Classes -> Lecture Color
+    return activeTheme.lectureColor;
   }
 
   List<_TimelineSlot> _buildTimelineSlots(List<TimetableEvent> events) {
@@ -927,8 +927,8 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           date.day == DateTime.now().day;
                       final hasEvents = _hasEventsOnDate(date);
 
-                      final selectedPillColor = (activeTheme.key == 'dark')
-                          ? const Color(0xFF3B82F6) // Keep blue on day selector!
+                      final selectedPillColor = (activeTheme.key == 'dark' || activeTheme.key == 'rhul')
+                          ? activeTheme.lectureColor
                           : activeTheme.primaryColor;
 
                       return GestureDetector(

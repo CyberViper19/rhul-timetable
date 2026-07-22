@@ -14,6 +14,7 @@ class AppThemeConfig {
   final Color subtitleTextColor;
   final Color assessmentColor;
   final Color optionalColor;
+  final Color lectureColor;
 
   const AppThemeConfig({
     required this.key,
@@ -28,6 +29,7 @@ class AppThemeConfig {
     required this.subtitleTextColor,
     required this.assessmentColor,
     required this.optionalColor,
+    required this.lectureColor,
   });
 
   static AppThemeConfig getTheme(String key, Brightness systemBrightness) {
@@ -46,6 +48,7 @@ class AppThemeConfig {
           subtitleTextColor: Color(0xFF94A3B8),
           assessmentColor: Color(0xFFF59E0B),
           optionalColor: Color(0xFF10B981),
+          lectureColor: Color(0xFF6366F1),
         );
       case 'system':
         return systemBrightness == Brightness.dark ? _darkTheme : _lightTheme;
@@ -67,6 +70,7 @@ class AppThemeConfig {
           subtitleTextColor: Color(0xFF8E8E93),
           assessmentColor: Color(0xFFFF9500),
           optionalColor: Color(0xFF30D158),
+          lectureColor: Color(0xFF0A84FF),
         );
       case 'rhul':
       default:
@@ -74,7 +78,7 @@ class AppThemeConfig {
           key: 'rhul',
           displayName: 'RHUL Theme',
           primaryColor: Color(0xFFF97316), // Royal Holloway Orange
-          secondaryColor: Color(0xFF3B82F6), // Blue for Lectures
+          secondaryColor: Color(0xFFFB923C), // Orange for sync time, header icons, month selector
           scaffoldBackgroundColor: Color(0xFF000000), // Pure Black
           cardBackgroundColor: Color(0xFF121212), // Deep Pitch Black Card
           containerBackgroundColor: Color(0xFF000000), // Pure Black Container
@@ -83,6 +87,7 @@ class AppThemeConfig {
           subtitleTextColor: Color(0xFFA1A1AA),
           assessmentColor: Color(0xFFF97316), // Royal Holloway Orange for Assessments
           optionalColor: Color(0xFF10B981),
+          lectureColor: Color(0xFF3B82F6), // Blue for Lectures
         );
     }
   }
@@ -91,7 +96,7 @@ class AppThemeConfig {
     key: 'dark',
     displayName: 'Dark Mode',
     primaryColor: Colors.white,
-    secondaryColor: Color(0xFF3B82F6),
+    secondaryColor: Colors.white,
     scaffoldBackgroundColor: Color(0xFF000000),
     cardBackgroundColor: Color(0xFF141414),
     containerBackgroundColor: Color(0xFF000000),
@@ -100,6 +105,7 @@ class AppThemeConfig {
     subtitleTextColor: Color(0xFFA0A0A0),
     assessmentColor: Color(0xFFF97316),
     optionalColor: Color(0xFF10B981),
+    lectureColor: Color(0xFF3B82F6),
   );
 
   static const AppThemeConfig _lightTheme = AppThemeConfig(
@@ -115,5 +121,6 @@ class AppThemeConfig {
     subtitleTextColor: Color(0xFF64748B),
     assessmentColor: Color(0xFFE55B13),
     optionalColor: Color(0xFF059669),
+    lectureColor: Color(0xFF2563EB),
   );
 }
