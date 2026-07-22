@@ -8,6 +8,7 @@ import 'flutter_auth_keystore.dart';
 
 import 'flutter_background_sync.dart';
 import 'flutter_permissions_screen.dart';
+import 'flutter_event_details_dialog.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class DevHttpOverrides extends HttpOverrides {
@@ -446,6 +447,15 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
     return useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8);
   }
 
+  void _showEventDetailsModal(BuildContext context, TimetableEvent event, Color typeColor) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => EventDetailsModalSheet(event: event, typeColor: typeColor),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
@@ -818,7 +828,9 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                         final event = dayEvents[index];
                         final typeColor = _getEventTypeColor(event.type, useIOSStyle);
 
-                        return Card(
+                        return GestureDetector(
+                          onTap: () => _showEventDetailsModal(context, event, typeColor),
+                          child: Card(
                           margin: const EdgeInsets.only(bottom: 12),
                           color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
                           shape: RoundedRectangleBorder(
@@ -922,9 +934,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                               ],
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    },
+                  ),
             ),
           ),
         ],
