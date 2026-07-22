@@ -66,7 +66,18 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _checkCurrentPermissions();
+      _checkCurrentPermissionsWithRetry();
+    }
+  }
+
+  Future<void> _checkCurrentPermissionsWithRetry() async {
+    await _checkCurrentPermissions();
+    if (_batteryGranted) return;
+
+    for (final delayMs in [400, 800, 1500]) {
+      await Future.delayed(Duration(milliseconds: delayMs));
+      if (!mounted || _batteryGranted) break;
+      await _checkCurrentPermissions();
     }
   }
 
@@ -97,7 +108,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
         await openAppSettings();
       }
     }
-    await _checkCurrentPermissions();
+    await _checkCurrentPermissionsWithRetry();
   }
 
   Future<void> _requestBatteryOptimization() async {
@@ -111,7 +122,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
           await openAppSettings();
         }
       }
-      await _checkCurrentPermissions();
+      await _checkCurrentPermissionsWithRetry();
     }
   }
 

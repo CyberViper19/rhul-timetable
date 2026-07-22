@@ -1355,7 +1355,18 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _loadSystemPermissions();
+      _loadSystemPermissionsWithRetry();
+    }
+  }
+
+  Future<void> _loadSystemPermissionsWithRetry() async {
+    await _loadSystemPermissions();
+    if (_batteryGranted) return;
+
+    for (final delayMs in [400, 800, 1500]) {
+      await Future.delayed(Duration(milliseconds: delayMs));
+      if (!mounted || _batteryGranted) break;
+      await _loadSystemPermissions();
     }
   }
 
