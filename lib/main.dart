@@ -1632,9 +1632,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   onChanged: (val) {
                     setState(() {
                       _assessmentReminders = val;
-                      if (val && _reminderHours.isEmpty) {
-                        _reminderHours = [1, 24];
-                      }
                     });
                     _saveSettings();
                   },
@@ -1689,7 +1686,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                                   }),
                                   ActionChip(
                                     avatar: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
-                                    label: const Text("+ Custom"),
+                                    label: const Text("Custom"),
                                     labelStyle: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
