@@ -677,19 +677,22 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
               _getFormattedLastSyncTime(),
               style: TextStyle(
                 fontSize: 11,
-                color: activeTheme.secondaryColor,
+                color: activeTheme.key == 'dark' ? activeTheme.subtitleTextColor : activeTheme.secondaryColor,
               ),
             ),
           ],
         ),
         actions: [
-          _SyncIconButton(onRefresh: widget.onRefresh, color: activeTheme.secondaryColor),
+          _SyncIconButton(
+            onRefresh: widget.onRefresh,
+            color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.secondaryColor,
+          ),
           IconButton(
             icon: Icon(
               useIOSStyle ? CupertinoIcons.today : Icons.today_rounded,
               size: 22,
             ),
-            color: activeTheme.secondaryColor,
+            color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.secondaryColor,
             tooltip: "Jump to Today",
             onPressed: _jumpToToday,
           ),
@@ -706,7 +709,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                 color: activeTheme.containerBackgroundColor,
               ),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: activeTheme.primaryColor,
+                backgroundColor: activeTheme.key == 'dark' ? const Color(0xFF3B82F6) : activeTheme.primaryColor,
                 child: Icon(
                   useIOSStyle ? CupertinoIcons.person_fill : Icons.person_rounded,
                   color: Colors.white,
@@ -728,7 +731,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_month_rounded,
-                color: activeTheme.primaryColor,
+                color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
               ),
               title: Text("My Schedule", style: TextStyle(color: activeTheme.textColor)),
               onTap: () {
@@ -758,7 +761,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.gear : Icons.settings_rounded,
-                color: activeTheme.primaryColor,
+                color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
               ),
               title: Text("Settings", style: TextStyle(color: activeTheme.textColor)),
               onTap: () {
@@ -774,7 +777,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.arrow_clockwise : Icons.refresh_rounded,
-                color: activeTheme.primaryColor,
+                color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
               ),
               title: Text("Sync Now", style: TextStyle(color: activeTheme.textColor)),
               onTap: () async {
@@ -820,7 +823,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     useIOSStyle ? CupertinoIcons.chevron_left_circle_fill : Icons.arrow_back_ios_new_rounded,
                     size: 22,
                   ),
-                  color: activeTheme.primaryColor,
+                  color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
                   tooltip: "Previous Week",
                   onPressed: _previousWeek,
                 ),
@@ -830,10 +833,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: activeTheme.primaryColor.withValues(alpha: 0.15),
+                        color: (activeTheme.key == 'dark' ? Colors.white : activeTheme.primaryColor).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: activeTheme.primaryColor.withValues(alpha: 0.4),
+                          color: (activeTheme.key == 'dark' ? Colors.white : activeTheme.primaryColor).withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -846,7 +849,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: activeTheme.secondaryColor,
+                                color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.secondaryColor,
                               ),
                             ),
                           ),
@@ -855,7 +858,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: activeTheme.primaryColor.withValues(alpha: 0.25),
+                                color: (activeTheme.key == 'dark' ? Colors.white : activeTheme.primaryColor).withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -863,7 +866,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: activeTheme.secondaryColor,
+                                  color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.secondaryColor,
                                 ),
                               ),
                             ),
@@ -872,7 +875,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           Icon(
                             useIOSStyle ? CupertinoIcons.chevron_down : Icons.arrow_drop_down_rounded,
                             size: 16,
-                            color: activeTheme.secondaryColor,
+                            color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.secondaryColor,
                           ),
                         ],
                       ),
@@ -886,7 +889,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     useIOSStyle ? CupertinoIcons.chevron_right_circle_fill : Icons.arrow_forward_ios_rounded,
                     size: 22,
                   ),
-                  color: activeTheme.primaryColor,
+                  color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
                   tooltip: "Next Week",
                   onPressed: _nextWeek,
                 ),
@@ -924,6 +927,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           date.day == DateTime.now().day;
                       final hasEvents = _hasEventsOnDate(date);
 
+                      final selectedPillColor = (activeTheme.key == 'dark')
+                          ? const Color(0xFF3B82F6) // Keep blue on day selector!
+                          : activeTheme.primaryColor;
+
                       return GestureDetector(
                         onTap: () {
                           setState(() {
@@ -935,14 +942,14 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? activeTheme.primaryColor
+                                ? selectedPillColor
                                 : (isToday ? activeTheme.cardBackgroundColor : Colors.transparent),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
                                   ? Colors.transparent
                                   : (isToday
-                                      ? activeTheme.primaryColor
+                                      ? selectedPillColor
                                       : activeTheme.borderColor),
                             ),
                           ),
@@ -956,7 +963,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: isSelected
                                       ? Colors.white
-                                      : (isToday ? activeTheme.secondaryColor : activeTheme.subtitleTextColor),
+                                      : (isToday ? selectedPillColor : activeTheme.subtitleTextColor),
                                 ),
                               ),
                               const SizedBox(height: 3),
