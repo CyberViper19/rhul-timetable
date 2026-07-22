@@ -291,6 +291,22 @@ class _SyncIconButtonState extends State<_SyncIconButton> with SingleTickerProvi
       onPressed: _isSyncing ? null : _handleSync,
     );
   }
+class _TimelineSlot {
+  final bool isGap;
+  final TimetableEvent? event;
+  final String startTime;
+  final String finishTime;
+  final int gapDurationMinutes;
+
+  _TimelineSlot.event(this.event)
+      : isGap = false,
+        startTime = event!.start,
+        finishTime = event.finish,
+        gapDurationMinutes = 0;
+
+  _TimelineSlot.gap(this.startTime, this.finishTime, this.gapDurationMinutes)
+      : isGap = true,
+        event = null;
 }
 
 /// Dashboard Screen featuring Timetable Schedule with Interactive Calendar Navigation
@@ -547,6 +563,57 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
 
     // Default / Regular Classes -> Blue/Indigo
     return useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8);
+  }
+
+  List<_TimelineSlot> _buildTimelineSlots(List<TimetableEvent> events) {
+    if (events.isEmpty) return [];
+
+    final sorted = List<TimetableEvent>.from(events)..sort((a, b) {
+      return _parseTimeToMinutes(a.start).compareTo(_parseTimeToMinutes(b.start));
+    });
+
+    final List<_TimelineSlot> slots = [];
+
+    for (int i = 0; i < sorted.length; i++) {
+      final current = sorted[i];
+
+      if (i > 0) {
+        final prev = sorted[i - 1];
+        final prevEnd = _parseTimeToMinutes(prev.finish);
+        final currStart = _parseTimeToMinutes(current.start);
+
+        if (currStart > prevEnd + 10) {
+          slots.add(_TimelineSlot.gap(prev.finish, current.start, currStart - prevEnd));
+        }
+      }
+
+      slots.add(_TimelineSlot.event(current));
+    }
+
+    return slots;
+  }
+
+  int _parseTimeToMinutes(String timeStr) {
+    final parts = timeStr.split(':');
+    if (parts.length >= 2) {
+      final h = int.tryParse(parts[0]) ?? 0;
+      final m = int.tryParse(parts[1]) ?? 0;
+      return h * 60 + m;
+    }
+    return 0;
+  }
+
+  String _formatGapDuration(int minutes) {
+    if (minutes >= 60) {
+      final hours = minutes ~/ 60;
+      final mins = minutes % 60;
+      if (mins == 0) {
+        return "$hours hr${hours > 1 ? 's' : ''}";
+      } else {
+        return "${hours}h ${mins}m";
+      }
+    }
+    return "$minutes mins";
   }
 
   void _showEventDetailsModal(BuildContext context, TimetableEvent event, Color typeColor) {
@@ -929,124 +996,229 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                         ),
                       ],
                     )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: dayEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = dayEvents[index];
-                        final typeColor = _getEventTypeColor(event.type, useIOSStyle);
+                  : () {
+                      final slots = _buildTimelineSlots(dayEvents);
 
-                        return GestureDetector(
-                          onTap: () => _showEventDetailsModal(context, event, typeColor),
-                          child: Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
-                            side: BorderSide(
-                              color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Container(
-                                  width: 5,
-                                  color: typeColor,
-                                ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                event.module,
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: typeColor.withValues(alpha: 0.2),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: Text(
-                                                event.type,
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: typeColor,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                      return ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        itemCount: slots.length,
+                        itemBuilder: (context, index) {
+                          final slot = slots[index];
+
+                          if (slot.isGap) {
+                            final durationText = _formatGapDuration(slot.gapDurationMinutes);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Large Time Header for Gap
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        useIOSStyle ? CupertinoIcons.pause_circle_fill : Icons.timer_outlined,
+                                        size: 18,
+                                        color: const Color(0xFF64748B),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "${slot.startTime} – ${slot.finishTime}",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+                                          letterSpacing: -0.5,
                                         ),
-                                        const SizedBox(height: 8),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              useIOSStyle ? CupertinoIcons.clock : Icons.access_time_rounded,
-                                              size: 14,
-                                              color: const Color(0xFF94A3B8),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              "${event.start} - ${event.finish}",
-                                              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Icon(
-                                              useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
-                                              size: 14,
-                                              color: const Color(0xFF94A3B8),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Text(
-                                              event.location,
-                                              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
-                                            ),
-                                          ],
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF334155).withValues(alpha: 0.5),
+                                          borderRadius: BorderRadius.circular(12),
                                         ),
-                                        if (event.staff.isNotEmpty) ...[
-                                          const SizedBox(height: 6),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
-                                                size: 14,
-                                                color: const Color(0xFF94A3B8),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                event.staff,
-                                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                                              ),
-                                            ],
+                                        child: Text(
+                                          durationText,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFF94A3B8),
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                        ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Gap Card Underneath
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: useIOSStyle ? const Color(0xFF141416) : const Color(0xFF0F172A),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: const Color(0xFF334155).withValues(alpha: 0.6),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Text("☕", style: TextStyle(fontSize: 18)),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          "Free Break ($durationText)",
+                                          style: const TextStyle(
+                                            color: Color(0xFF94A3B8),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                                ],
+                              ),
+                            );
+                          } else {
+                            final event = slot.event!;
+                            final typeColor = _getEventTypeColor(event.type, useIOSStyle);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Large Time Header for Lecture
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        useIOSStyle ? CupertinoIcons.clock_fill : Icons.access_time_filled_rounded,
+                                        size: 20,
+                                        color: primaryColor,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "${event.start} – ${event.finish}",
+                                        style: const TextStyle(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          letterSpacing: -0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Lecture Card Underneath
+                                  GestureDetector(
+                                    onTap: () => _showEventDetailsModal(context, event, typeColor),
+                                    child: Card(
+                                      margin: EdgeInsets.zero,
+                                      color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
+                                        side: BorderSide(
+                                          color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
+                                        ),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: IntrinsicHeight(
+                                        child: Row(
+                                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                                          children: [
+                                            Container(
+                                              width: 6,
+                                              color: typeColor,
+                                            ),
+                                            Expanded(
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(16.0),
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            event.module,
+                                                            style: const TextStyle(
+                                                              fontSize: 17,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: Colors.white,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                                          decoration: BoxDecoration(
+                                                            color: typeColor.withValues(alpha: 0.2),
+                                                            borderRadius: BorderRadius.circular(8),
+                                                          ),
+                                                          child: Text(
+                                                            event.type,
+                                                            style: TextStyle(
+                                                              fontSize: 11,
+                                                              color: typeColor,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 10),
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
+                                                          size: 15,
+                                                          color: const Color(0xFF94A3B8),
+                                                        ),
+                                                        const SizedBox(width: 6),
+                                                        Expanded(
+                                                          child: Text(
+                                                            event.location,
+                                                            style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                                                            overflow: TextOverflow.ellipsis,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    if (event.staff.isNotEmpty) ...[
+                                                      const SizedBox(height: 6),
+                                                      Row(
+                                                        children: [
+                                                          Icon(
+                                                            useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
+                                                            size: 15,
+                                                            color: const Color(0xFF94A3B8),
+                                                          ),
+                                                          const SizedBox(width: 6),
+                                                          Text(
+                                                            event.staff,
+                                                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                        },
                       );
-                    },
-                  ),
+                    }(),
             ),
           ),
         ],
