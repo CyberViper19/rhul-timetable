@@ -730,7 +730,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
 
           // Interactive Week Calendar Strip (Finger Scrollable & Swipeable)
           SizedBox(
-            height: 68,
+            height: 78,
             child: PageView.builder(
               controller: _weekPageController,
               onPageChanged: (pageIndex) {

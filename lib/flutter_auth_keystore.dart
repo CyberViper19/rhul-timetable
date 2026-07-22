@@ -182,6 +182,7 @@ class StudentLoginScreen extends StatefulWidget {
   State<StudentLoginScreen> createState() => _StudentLoginScreenState();
 }
 
+class _StudentLoginScreenState extends State<StudentLoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
