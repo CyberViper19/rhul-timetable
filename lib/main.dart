@@ -2196,9 +2196,4 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           : null,
     );
   }
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
-  }
 }
