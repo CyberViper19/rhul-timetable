@@ -938,19 +938,32 @@ class MyAssessmentsScreen extends StatelessWidget {
               itemCount: assessments.length,
               itemBuilder: (context, index) {
                 final item = assessments[index];
+                DateTime? endDateTime;
                 final dt = DateTime.tryParse(item.exactDate);
-                final isPast = dt != null && dt.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+                if (dt != null) {
+                  final parts = item.finish.split(':');
+                  if (parts.length == 2) {
+                    final hour = int.tryParse(parts[0]) ?? 23;
+                    final min = int.tryParse(parts[1]) ?? 59;
+                    endDateTime = DateTime(dt.year, dt.month, dt.day, hour, min);
+                  } else {
+                    endDateTime = DateTime(dt.year, dt.month, dt.day, 23, 59);
+                  }
+                }
+                final isCompleted = endDateTime != null ? endDateTime.isBefore(DateTime.now()) : false;
 
                 return Card(
                   margin: const EdgeInsets.only(bottom: 14),
-                  color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+                  color: isCompleted
+                      ? (useIOSStyle ? const Color(0xFF141416) : const Color(0xFF151E2E))
+                      : (useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
                     side: BorderSide(
-                      color: isPast
-                          ? const Color(0xFF334155)
+                      color: isCompleted
+                          ? const Color(0xFF334155).withValues(alpha: 0.5)
                           : (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B)).withValues(alpha: 0.5),
-                      width: isPast ? 1 : 1.5,
+                      width: isCompleted ? 1 : 1.5,
                     ),
                   ),
                   child: Padding(
@@ -964,30 +977,57 @@ class MyAssessmentsScreen extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 item.module,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
+                                  decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                                  decorationColor: const Color(0xFF94A3B8),
                                 ),
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B))
-                                    .withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                item.type,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B),
-                                  fontWeight: FontWeight.bold,
+                            if (isCompleted)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      "Completed",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF10B981),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B))
+                                      .withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  item.type,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -996,15 +1036,16 @@ class MyAssessmentsScreen extends StatelessWidget {
                             Icon(
                               useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_today_rounded,
                               size: 14,
-                              color: const Color(0xFF94A3B8),
+                              color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               "${item.day}, ${item.formattedDate}",
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 13,
+                                decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
                               ),
                             ),
                             if (item.academicWeek > 0) ...[
@@ -1012,14 +1053,17 @@ class MyAssessmentsScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1)).withValues(alpha: 0.2),
+                                  color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
+                                      .withValues(alpha: isCompleted ? 0.1 : 0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
                                   "Wk ${item.academicWeek}",
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: useIOSStyle ? const Color(0xFF64D2FF) : const Color(0xFFA5B4FC),
+                                    color: isCompleted
+                                        ? const Color(0xFF64748B)
+                                        : (useIOSStyle ? const Color(0xFF64D2FF) : const Color(0xFFA5B4FC)),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -1033,24 +1077,30 @@ class MyAssessmentsScreen extends StatelessWidget {
                             Icon(
                               useIOSStyle ? CupertinoIcons.clock : Icons.access_time_rounded,
                               size: 14,
-                              color: const Color(0xFF94A3B8),
+                              color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                             ),
                             const SizedBox(width: 6),
                             Text(
                               "${item.start} - ${item.finish}",
-                              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
+                              style: TextStyle(
+                                color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                                fontSize: 13,
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Icon(
                               useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
                               size: 14,
-                              color: const Color(0xFF94A3B8),
+                              color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                             ),
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
                                 item.location,
-                                style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
+                                style: TextStyle(
+                                  color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                                  fontSize: 13,
+                                ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
