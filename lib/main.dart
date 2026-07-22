@@ -1133,7 +1133,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                       Icon(
                                         useIOSStyle ? CupertinoIcons.clock_fill : Icons.access_time_filled_rounded,
                                         size: 20,
-                                        color: primaryColor,
+                                        color: typeColor,
                                       ),
                                       const SizedBox(width: 8),
                                       Text(

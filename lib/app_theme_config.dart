@@ -74,14 +74,14 @@ class AppThemeConfig {
           key: 'rhul',
           displayName: 'RHUL Theme',
           primaryColor: Color(0xFFF97316), // Royal Holloway Orange
-          secondaryColor: Color(0xFFFB923C),
+          secondaryColor: Color(0xFF3B82F6), // Blue for Lectures
           scaffoldBackgroundColor: Color(0xFF000000), // Pure Black
           cardBackgroundColor: Color(0xFF121212), // Deep Pitch Black Card
           containerBackgroundColor: Color(0xFF000000), // Pure Black Container
           borderColor: Color(0xFF27272A),
           textColor: Colors.white,
           subtitleTextColor: Color(0xFFA1A1AA),
-          assessmentColor: Color(0xFFF97316),
+          assessmentColor: Color(0xFFF97316), // Royal Holloway Orange for Assessments
           optionalColor: Color(0xFF10B981),
         );
     }
