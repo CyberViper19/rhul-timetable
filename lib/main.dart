@@ -1320,10 +1320,10 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObserver {
   final _cacheManager = TimetableCacheManager();
 
-  bool _cancellations = true;
-  bool _roomChanges = true;
-  bool _reschedules = true;
-  bool _assessmentReminders = true;
+  bool _cancellations = false;
+  bool _roomChanges = false;
+  bool _reschedules = false;
+  bool _assessmentReminders = false;
   List<int> _reminderHours = [1, 24];
 
   bool _notificationGranted = false;
@@ -1505,59 +1505,62 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     _saveSettings();
                   },
                 ),
+                // Collapsible Assessment Reminder Intervals directly under Assessment Reminders tab
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.fastOutSlowIn,
+                  child: _assessmentReminders
+                      ? Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 4),
+                          decoration: const BoxDecoration(
+                            border: Border(top: BorderSide(color: Color(0xFF334155), width: 1)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              Text(
+                                "REMINDER INTERVALS",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                  color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _availableIntervals.map((item) {
+                                  final label = item['label'] as String;
+                                  final hours = item['hours'] as int;
+                                  final isSelected = _reminderHours.contains(hours);
+
+                                  return FilterChip(
+                                    selected: isSelected,
+                                    label: Text(label),
+                                    labelStyle: TextStyle(
+                                      color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 12,
+                                    ),
+                                    selectedColor: primaryColor,
+                                    backgroundColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                                    checkmarkColor: Colors.white,
+                                    onSelected: (_) => _toggleInterval(hours),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ],
             ),
           ),
-
-          if (_assessmentReminders) ...[
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.only(left: 4, bottom: 8),
-              child: Text(
-                "ASSESSMENT REMINDER INTERVALS",
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.1,
-                  color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
-                ),
-              ),
-            ),
-            Card(
-              color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(
-                  color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _availableIntervals.map((item) {
-                    final label = item['label'] as String;
-                    final hours = item['hours'] as int;
-                    final isSelected = _reminderHours.contains(hours);
-
-                    return FilterChip(
-                      selected: isSelected,
-                      label: Text(label),
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      selectedColor: primaryColor,
-                      backgroundColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
-                      checkmarkColor: Colors.white,
-                      onSelected: (_) => _toggleInterval(hours),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: 24),
           // Section Header: System Permissions
           Padding(

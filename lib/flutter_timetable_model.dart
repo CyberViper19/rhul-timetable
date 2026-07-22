@@ -134,10 +134,10 @@ class TimetableCacheManager {
     }
 
     return {
-      'cancellations': c == null ? true : c == 'true',
-      'roomChanges': rc == null ? true : rc == 'true',
-      'reschedules': rs == null ? true : rs == 'true',
-      'assessmentReminders': ar == null ? true : ar == 'true',
+      'cancellations': c == null ? false : c == 'true',
+      'roomChanges': rc == null ? false : rc == 'true',
+      'reschedules': rs == null ? false : rs == 'true',
+      'assessmentReminders': ar == null ? false : ar == 'true',
       'reminderHours': reminderHours,
     };
   }
