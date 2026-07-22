@@ -162,6 +162,11 @@ class TimetableBackgroundSyncEngine {
     await cacheManager.cacheEvents(newEvents);
   }
 
+  /// Cancel all scheduled assessment reminders
+  Future<void> cancelAssessmentReminders() async {
+    await _notificationsPlugin.cancelAll();
+  }
+
   /// Schedule customizable reminders for upcoming assessments
   Future<void> scheduleAssessmentReminders(
       List<TimetableEvent> events, List<int> reminderHours) async {

@@ -1916,11 +1916,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                               const SizedBox(height: 8),
                               Text(
                                 "REMINDER INTERVALS",
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.0,
-                                  color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+                                  color: Color(0xFF94A3B8),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -1942,7 +1942,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                                         fontSize: 12,
                                       ),
                                       selectedColor: primaryColor,
-                                      backgroundColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                                      backgroundColor: const Color(0xFF0F172A),
                                       checkmarkColor: Colors.white,
                                       onSelected: (_) => _toggleInterval(hours),
                                     );
@@ -1970,30 +1970,30 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ),
           const SizedBox(height: 24),
           // Section Header: System Permissions
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               "SYSTEM PERMISSIONS & BACKGROUND SYNC",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.1,
-                color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+                color: Color(0xFF94A3B8),
               ),
             ),
           ),
           Card(
-            color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+            color: const Color(0xFF1E293B),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
+              side: const BorderSide(
+                color: Color(0xFF334155),
               ),
             ),
             child: Column(
               children: [
                 ListTile(
-                  leading: Icon(useIOSStyle ? CupertinoIcons.bell : Icons.notifications_none_rounded, color: primaryColor),
+                  leading: const Icon(Icons.notifications_none_rounded, color: primaryColor),
                   title: const Text("System Push Notifications", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   subtitle: Text(
                     _notificationGranted ? "Permission Granted" : "Permission Denied (Notifications Disabled)",
@@ -2011,13 +2011,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       }
                       await _loadSystemPermissions();
                     },
-                    child: Text(_notificationGranted ? "Manage" : "Enable", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                    child: Text(_notificationGranted ? "Manage" : "Enable", style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 if (!kIsWeb && Platform.isAndroid) ...[
                   const Divider(height: 1, color: Color(0xFF334155)),
                   ListTile(
-                    leading: Icon(useIOSStyle ? CupertinoIcons.battery_charging : Icons.battery_saver_rounded, color: const Color(0xFF10B981)),
+                    leading: const Icon(Icons.battery_saver_rounded, color: Color(0xFF10B981)),
                     title: const Text("Unrestricted Battery Optimization", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       _batteryGranted ? "Unrestricted (Background Sync active)" : "Optimized (Sync may be delayed by OS)",
@@ -2035,7 +2035,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                         }
                         await _loadSystemPermissions();
                       },
-                      child: Text(_batteryGranted ? "Manage" : "Disable", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                      child: Text(_batteryGranted ? "Manage" : "Disable", style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
