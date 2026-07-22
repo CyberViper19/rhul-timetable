@@ -1055,18 +1055,41 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
   }
 }
 
-/// Screen listing all university assessments in chronological order
-class MyAssessmentsScreen extends StatelessWidget {
+/// Screen listing all university assessments in chronological order with collapsible completed tab
+class MyAssessmentsScreen extends StatefulWidget {
   final List<TimetableEvent> events;
   final Future<void> Function()? onRefresh;
 
   const MyAssessmentsScreen({super.key, required this.events, this.onRefresh});
 
   @override
+  State<MyAssessmentsScreen> createState() => _MyAssessmentsScreenState();
+}
+
+class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
+  bool _isCompletedExpanded = false;
+
+  bool _isEventCompleted(TimetableEvent item) {
+    DateTime? endDateTime;
+    final dt = DateTime.tryParse(item.exactDate);
+    if (dt != null) {
+      final parts = item.finish.split(':');
+      if (parts.length == 2) {
+        final hour = int.tryParse(parts[0]) ?? 23;
+        final min = int.tryParse(parts[1]) ?? 59;
+        endDateTime = DateTime(dt.year, dt.month, dt.day, hour, min);
+      } else {
+        endDateTime = DateTime(dt.year, dt.month, dt.day, 23, 59);
+      }
+    }
+    return endDateTime != null ? endDateTime.isBefore(DateTime.now()) : false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
 
-    final assessments = events.where((e) {
+    final allAssessments = widget.events.where((e) {
       final t = e.type.toLowerCase();
       return t.contains('assessment') || t.contains('exam') || t.contains('test');
     }).toList()
@@ -1074,6 +1097,9 @@ class MyAssessmentsScreen extends StatelessWidget {
         final d = a.exactDate.compareTo(b.exactDate);
         return d != 0 ? d : a.start.compareTo(b.start);
       });
+
+    final upcoming = allAssessments.where((e) => !_isEventCompleted(e)).toList();
+    final completed = allAssessments.where((e) => _isEventCompleted(e)).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -1084,12 +1110,12 @@ class MyAssessmentsScreen extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         actions: [
-          if (onRefresh != null)
-            _SyncIconButton(onRefresh: onRefresh!),
+          if (widget.onRefresh != null)
+            _SyncIconButton(onRefresh: widget.onRefresh!),
           const SizedBox(width: 4),
         ],
       ),
-      body: assessments.isEmpty
+      body: allAssessments.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1101,208 +1127,267 @@ class MyAssessmentsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    "No upcoming assessments found.",
+                    "No assessments found.",
                     style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
                   ),
                 ],
               ),
             )
-          : ListView.builder(
+          : ListView(
               padding: const EdgeInsets.all(16),
-              itemCount: assessments.length,
-              itemBuilder: (context, index) {
-                final item = assessments[index];
-                DateTime? endDateTime;
-                final dt = DateTime.tryParse(item.exactDate);
-                if (dt != null) {
-                  final parts = item.finish.split(':');
-                  if (parts.length == 2) {
-                    final hour = int.tryParse(parts[0]) ?? 23;
-                    final min = int.tryParse(parts[1]) ?? 59;
-                    endDateTime = DateTime(dt.year, dt.month, dt.day, hour, min);
-                  } else {
-                    endDateTime = DateTime(dt.year, dt.month, dt.day, 23, 59);
-                  }
-                }
-                final isCompleted = endDateTime != null ? endDateTime.isBefore(DateTime.now()) : false;
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 14),
-                  color: isCompleted
-                      ? (useIOSStyle ? const Color(0xFF141416) : const Color(0xFF151E2E))
-                      : (useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
-                    side: BorderSide(
-                      color: isCompleted
-                          ? const Color(0xFF334155).withValues(alpha: 0.5)
-                          : (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B)).withValues(alpha: 0.5),
-                      width: isCompleted ? 1 : 1.5,
+              children: [
+                if (upcoming.isEmpty && completed.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      "No upcoming assessments.",
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
                     ),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                ...upcoming.map((item) => _buildAssessmentCard(item, isCompleted: false, useIOSStyle: useIOSStyle)),
+
+                if (completed.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Card(
+                    color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: const BorderSide(color: Color(0xFF334155)),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        setState(() {
+                          _isCompletedExpanded = !_isCompletedExpanded;
+                        });
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        child: Row(
                           children: [
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              color: Color(0xFF10B981),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                item.module,
-                                style: TextStyle(
-                                  fontSize: 16,
+                                "Completed Assessments (${completed.length})",
+                                style: const TextStyle(
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
-                                  decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
-                                  decorationColor: const Color(0xFF94A3B8),
+                                  fontSize: 15,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            if (isCompleted)
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      "Completed",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Color(0xFF10B981),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            else
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B))
-                                      .withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  item.type,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
                             Icon(
-                              useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_today_rounded,
-                              size: 14,
-                              color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              "${item.day}, ${item.formattedDate}",
-                              style: TextStyle(
-                                color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                                decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
-                              ),
-                            ),
-                            if (item.academicWeek > 0) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
-                                      .withValues(alpha: isCompleted ? 0.1 : 0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  "Wk ${item.academicWeek}",
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: isCompleted
-                                        ? const Color(0xFF64748B)
-                                        : (useIOSStyle ? const Color(0xFF64D2FF) : const Color(0xFFA5B4FC)),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              useIOSStyle ? CupertinoIcons.clock : Icons.access_time_rounded,
-                              size: 14,
-                              color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              "${item.start} - ${item.finish}",
-                              style: TextStyle(
-                                color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Icon(
-                              useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
-                              size: 14,
-                              color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                item.location,
-                                style: TextStyle(
-                                  color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
-                                  fontSize: 13,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                              _isCompletedExpanded
+                                  ? (useIOSStyle ? CupertinoIcons.chevron_up : Icons.keyboard_arrow_up_rounded)
+                                  : (useIOSStyle ? CupertinoIcons.chevron_down : Icons.keyboard_arrow_down_rounded),
+                              color: const Color(0xFF94A3B8),
                             ),
                           ],
                         ),
-                        if (item.staff.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
-                                size: 14,
-                                color: const Color(0xFF94A3B8),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                item.staff,
-                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                              ),
-                            ],
+                      ),
+                    ),
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.fastOutSlowIn,
+                    child: _isCompletedExpanded
+                        ? Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: Column(
+                              children: completed
+                                  .map((item) => _buildAssessmentCard(item, isCompleted: true, useIOSStyle: useIOSStyle))
+                                  .toList(),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _buildAssessmentCard(TimetableEvent item, {required bool isCompleted, required bool useIOSStyle}) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      color: isCompleted
+          ? (useIOSStyle ? const Color(0xFF141416) : const Color(0xFF151E2E))
+          : (useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
+        side: BorderSide(
+          color: isCompleted
+              ? const Color(0xFF334155).withValues(alpha: 0.5)
+              : (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B)).withValues(alpha: 0.5),
+          width: isCompleted ? 1 : 1.5,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    item.module,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
+                      decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                      decorationColor: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (isCompleted)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 12),
+                        SizedBox(width: 4),
+                        Text(
+                          "Completed",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF10B981),
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
+                        ),
                       ],
                     ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B))
+                          .withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      item.type,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                );
-              },
+              ],
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_today_rounded,
+                  size: 14,
+                  color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "${item.day}, ${item.formattedDate}",
+                  style: TextStyle(
+                    color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                  ),
+                ),
+                if (item.academicWeek > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
+                          .withValues(alpha: isCompleted ? 0.1 : 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "Wk ${item.academicWeek}",
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: isCompleted
+                            ? const Color(0xFF64748B)
+                            : (useIOSStyle ? const Color(0xFF64D2FF) : const Color(0xFFA5B4FC)),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  useIOSStyle ? CupertinoIcons.clock : Icons.access_time_rounded,
+                  size: 14,
+                  color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  "${item.start} - ${item.finish}",
+                  style: TextStyle(
+                    color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Icon(
+                  useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
+                  size: 14,
+                  color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    item.location,
+                    style: TextStyle(
+                      color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                      fontSize: 13,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            if (item.staff.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
+                    size: 14,
+                    color: const Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    item.staff,
+                    style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
