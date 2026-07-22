@@ -794,6 +794,23 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ),
             ListTile(
               leading: Icon(
+                useIOSStyle ? CupertinoIcons.bell : Icons.notifications_active_rounded,
+                color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
+              ),
+              title: Text("Test Notifications", style: TextStyle(color: activeTheme.textColor)),
+              onTap: () async {
+                Navigator.pop(context);
+                final syncEngine = TimetableBackgroundSyncEngine();
+                await syncEngine.sendTestNotification();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Test notification sent!')),
+                  );
+                }
+              },
+            ),
+            ListTile(
+              leading: Icon(
                 useIOSStyle ? CupertinoIcons.arrow_clockwise : Icons.refresh_rounded,
                 color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
               ),

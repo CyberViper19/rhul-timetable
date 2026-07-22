@@ -287,6 +287,15 @@ class TimetableBackgroundSyncEngine {
       notificationDetails: notificationDetails,
     );
   }
+
+  /// Sends a test notification instantly
+  Future<void> sendTestNotification() async {
+    await _showNotification(
+      id: 9999,
+      title: "🧪 Test Notification",
+      body: "Notifications are working perfectly! You'll receive alerts like this when lectures are cancelled or moved.",
+    );
+  }
 }
 
 /// Diff Engine for detecting schedule changes
