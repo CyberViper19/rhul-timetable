@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'flutter_timetable_model.dart';
+import 'app_theme_config.dart';
+import 'main.dart' show themeNotifier;
 
 class RHULBuildingInfo {
   final String canonicalName;
@@ -33,9 +35,20 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
   @override
   void initState() {
     super.initState();
+    themeNotifier.addListener(_onThemeChanged);
     if (!_isOnline) {
       _initMapWebView();
     }
+  }
+
+  @override
+  void dispose() {
+    themeNotifier.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
   }
 
   bool get _isOnline => widget.event.location.toLowerCase().contains('online');
@@ -128,7 +141,7 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #1e293b; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #121212; }
     iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
   </style>
 </head>
@@ -140,7 +153,7 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
 
     final controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF1E293B))
+      ..setBackgroundColor(const Color(0xFF121212))
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) {
@@ -191,11 +204,13 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
     final building = _resolveRHULBuilding(widget.event.location);
 
     return Container(
       decoration: BoxDecoration(
-        color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+        color: activeTheme.cardBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -212,7 +227,7 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF64748B),
+                    color: activeTheme.subtitleTextColor.withValues(alpha: 0.6),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -226,10 +241,10 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
                   Expanded(
                     child: Text(
                       widget.event.module,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: activeTheme.textColor,
                         height: 1.2,
                       ),
                     ),
@@ -259,9 +274,9 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                  color: activeTheme.containerBackgroundColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF334155)),
+                  border: Border.all(color: activeTheme.borderColor),
                 ),
                 child: Column(
                   children: [
@@ -269,29 +284,33 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
                       icon: useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_today_rounded,
                       title: "Date",
                       value: "${widget.event.day}, ${widget.event.formattedDate}${widget.event.academicWeek > 0 ? ' (Week ${widget.event.academicWeek})' : ''}",
-                      iconColor: const Color(0xFF38BDF8),
+                      iconColor: activeTheme.lectureColor,
+                      activeTheme: activeTheme,
                     ),
-                    const Divider(height: 20, color: Color(0xFF334155)),
+                    Divider(height: 20, color: activeTheme.borderColor),
                     _buildDetailRow(
                       icon: useIOSStyle ? CupertinoIcons.clock : Icons.access_time_rounded,
                       title: "Time Slot",
                       value: "${widget.event.start} - ${widget.event.finish}",
-                      iconColor: const Color(0xFFF59E0B),
+                      iconColor: activeTheme.assessmentColor,
+                      activeTheme: activeTheme,
                     ),
-                    const Divider(height: 20, color: Color(0xFF334155)),
+                    Divider(height: 20, color: activeTheme.borderColor),
                     _buildDetailRow(
                       icon: useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
                       title: "Location",
                       value: _isOnline ? "Online Lecture" : "${building.canonicalName} (${widget.event.location})",
-                      iconColor: const Color(0xFF10B981),
+                      iconColor: activeTheme.optionalColor,
+                      activeTheme: activeTheme,
                     ),
                     if (widget.event.staff.isNotEmpty) ...[
-                      const Divider(height: 20, color: Color(0xFF334155)),
+                      Divider(height: 20, color: activeTheme.borderColor),
                       _buildDetailRow(
                         icon: useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
                         title: "Staff",
                         value: widget.event.staff,
-                        iconColor: const Color(0xFFA855F7),
+                        iconColor: activeTheme.tutorialColor,
+                        activeTheme: activeTheme,
                       ),
                     ],
                   ],
@@ -302,13 +321,13 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
 
               // Embedded Interactive Google Maps Preview Card
               if (!_isOnline) ...[
-                const Text(
+                Text(
                   "GOOGLE MAPS CAMPUS PREVIEW",
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.1,
-                    color: Color(0xFF94A3B8),
+                    color: activeTheme.subtitleTextColor,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -319,18 +338,18 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
                     child: Container(
                       height: 190,
                       decoration: BoxDecoration(
-                        border: Border.all(color: const Color(0xFF334155), width: 1.5),
+                        border: Border.all(color: activeTheme.borderColor, width: 1.5),
                         borderRadius: BorderRadius.circular(16),
-                        color: const Color(0xFF0F172A),
+                        color: activeTheme.containerBackgroundColor,
                       ),
                       child: Stack(
                         children: [
                           if (_webViewController != null)
                             WebViewWidget(controller: _webViewController!),
                           if (_isLoadingMap)
-                            const Center(
+                            Center(
                               child: CircularProgressIndicator(
-                                color: Color(0xFF4285F4),
+                                color: activeTheme.primaryColor,
                                 strokeWidth: 2.5,
                               ),
                             ),
@@ -395,7 +414,7 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isOnline ? const Color(0xFF64748B) : const Color(0xFF4285F4),
+                    backgroundColor: _isOnline ? activeTheme.subtitleTextColor : activeTheme.primaryColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -415,6 +434,7 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
     required String title,
     required String value,
     required Color iconColor,
+    required AppThemeConfig activeTheme,
   }) {
     return Row(
       children: [
@@ -433,8 +453,8 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Color(0xFF94A3B8),
+                style: TextStyle(
+                  color: activeTheme.subtitleTextColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -442,8 +462,8 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: activeTheme.textColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
