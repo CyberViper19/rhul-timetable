@@ -249,21 +249,62 @@ class TimetableDashboardScreen extends StatefulWidget {
 
 class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
   late DateTime _selectedDate;
+  static final DateTime _baseAnchorDate = DateTime(2025, 1, 1);
+  late PageController _weekPageController;
+
+  int _pageIndexFromDate(DateTime date) {
+    final startOfTarget = _getStartOfWeek(date);
+    final startOfBase = _getStartOfWeek(_baseAnchorDate);
+    final days = startOfTarget.difference(startOfBase).inDays;
+    return 10000 + (days / 7).round();
+  }
+
+  DateTime _dateFromPageIndex(int pageIndex) {
+    final weeksDiff = pageIndex - 10000;
+    return _getStartOfWeek(_baseAnchorDate).add(Duration(days: weeksDiff * 7));
+  }
 
   @override
   void initState() {
     super.initState();
     _initializeInitialDate();
+    _weekPageController = PageController(initialPage: _pageIndexFromDate(_selectedDate));
+  }
+
+  @override
+  void dispose() {
+    _weekPageController.dispose();
+    super.dispose();
   }
 
   void _initializeInitialDate() {
     _selectedDate = DateTime.now();
   }
 
-  void _jumpToToday() {
+  void _updateSelectedDateAndPage(DateTime newDate) {
     setState(() {
-      _selectedDate = DateTime.now();
+      _selectedDate = newDate;
     });
+    final targetPage = _pageIndexFromDate(newDate);
+    if (_weekPageController.hasClients && _weekPageController.page?.round() != targetPage) {
+      _weekPageController.animateToPage(
+        targetPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  void _jumpToToday() {
+    _updateSelectedDateAndPage(DateTime.now());
+  }
+
+  void _previousWeek() {
+    _updateSelectedDateAndPage(_selectedDate.subtract(const Duration(days: 7)));
+  }
+
+  void _nextWeek() {
+    _updateSelectedDateAndPage(_selectedDate.add(const Duration(days: 7)));
   }
 
   /// Opens platform native calendar date picker dialog
@@ -300,9 +341,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                   minimumYear: 2024,
                   maximumYear: 2028,
                   onDateTimeChanged: (DateTime newDate) {
-                    setState(() {
-                      _selectedDate = newDate;
-                    });
+                    _updateSelectedDateAndPage(newDate);
                   },
                 ),
               ),
@@ -329,9 +368,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
         },
       );
       if (picked != null) {
-        setState(() {
-          _selectedDate = picked;
-        });
+        _updateSelectedDateAndPage(picked);
       }
     }
   }
@@ -483,6 +520,18 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              useIOSStyle ? CupertinoIcons.today : Icons.today_rounded,
+              size: 22,
+            ),
+            color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
+            tooltip: "Jump to Today",
+            onPressed: _jumpToToday,
+          ),
+          const SizedBox(width: 6),
+        ],
       ),
 
       drawer: Drawer(
@@ -598,48 +647,22 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      icon: Icon(
-                        useIOSStyle ? CupertinoIcons.chevron_left_circle_fill : Icons.arrow_back_ios_new_rounded,
-                        size: 20,
-                      ),
-                      color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
-                      tooltip: "Previous Week",
-                      onPressed: () {
-                        setState(() {
-                          _selectedDate = _selectedDate.subtract(const Duration(days: 7));
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 2),
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      icon: Icon(
-                        useIOSStyle ? CupertinoIcons.chevron_right_circle_fill : Icons.arrow_forward_ios_rounded,
-                        size: 20,
-                      ),
-                      color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
-                      tooltip: "Next Week",
-                      onPressed: () {
-                        setState(() {
-                          _selectedDate = _selectedDate.add(const Duration(days: 7));
-                        });
-                      },
-                    ),
-                  ],
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  icon: Icon(
+                    useIOSStyle ? CupertinoIcons.chevron_left_circle_fill : Icons.arrow_back_ios_new_rounded,
+                    size: 22,
+                  ),
+                  color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                  tooltip: "Previous Week",
+                  onPressed: _previousWeek,
                 ),
-                // Tap Month Title to open full calendar
                 Flexible(
                   child: GestureDetector(
                     onTap: _openCalendarDatePicker,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1)).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
@@ -694,95 +717,112 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                   icon: Icon(
-                    useIOSStyle ? CupertinoIcons.today : Icons.today_rounded,
-                    size: 20,
+                    useIOSStyle ? CupertinoIcons.chevron_right_circle_fill : Icons.arrow_forward_ios_rounded,
+                    size: 22,
                   ),
-                  color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
-                  tooltip: "Today",
-                  onPressed: _jumpToToday,
+                  color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                  tooltip: "Next Week",
+                  onPressed: _nextWeek,
                 ),
               ],
             ),
           ),
 
-          // Interactive Week Calendar Strip
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-            color: useIOSStyle ? const Color(0xFF121214) : const Color(0xFF0F172A),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(7, (index) {
-                final date = startOfWeek.add(Duration(days: index));
-                final isSelected = date.year == _selectedDate.year &&
-                    date.month == _selectedDate.month &&
-                    date.day == _selectedDate.day;
-                final isToday = date.year == DateTime.now().year &&
-                    date.month == DateTime.now().month &&
-                    date.day == DateTime.now().day;
-                final hasEvents = _hasEventsOnDate(date);
+          // Interactive Week Calendar Strip (Finger Scrollable & Swipeable)
+          SizedBox(
+            height: 68,
+            child: PageView.builder(
+              controller: _weekPageController,
+              onPageChanged: (pageIndex) {
+                final newWeekStart = _dateFromPageIndex(pageIndex);
+                final currentWeekday = _selectedDate.weekday;
+                final newSelectedDate = newWeekStart.add(Duration(days: currentWeekday - 1));
+                setState(() {
+                  _selectedDate = newSelectedDate;
+                });
+              },
+              itemBuilder: (context, pageIndex) {
+                final weekStart = _dateFromPageIndex(pageIndex);
+                return Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                  color: useIOSStyle ? const Color(0xFF121214) : const Color(0xFF0F172A),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: List.generate(7, (index) {
+                      final date = weekStart.add(Duration(days: index));
+                      final isSelected = date.year == _selectedDate.year &&
+                          date.month == _selectedDate.month &&
+                          date.day == _selectedDate.day;
+                      final isToday = date.year == DateTime.now().year &&
+                          date.month == DateTime.now().month &&
+                          date.day == DateTime.now().day;
+                      final hasEvents = _hasEventsOnDate(date);
 
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedDate = date;
-                    });
-                  },
-                  child: Container(
-                    width: 44,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
-                          : (isToday ? const Color(0xFF1E293B) : Colors.transparent),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.transparent
-                            : (isToday
-                                ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
-                                : const Color(0xFF334155)),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          _weekdayShort(date.weekday),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? Colors.white
-                                : (isToday ? const Color(0xFF818CF8) : const Color(0xFF94A3B8)),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "${date.day}",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected ? Colors.white : Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // Indicator dot for dates with classes
-                        Container(
-                          width: 5,
-                          height: 5,
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedDate = date;
+                          });
+                        },
+                        child: Container(
+                          width: 44,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
                           decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: hasEvents
-                                ? (isSelected
-                                    ? Colors.white
-                                    : (useIOSStyle ? const Color(0xFF30D158) : const Color(0xFF34D399)))
-                                : Colors.transparent,
+                            color: isSelected
+                                ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
+                                : (isToday ? const Color(0xFF1E293B) : Colors.transparent),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.transparent
+                                  : (isToday
+                                      ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
+                                      : const Color(0xFF334155)),
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _weekdayShort(date.weekday),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : (isToday ? const Color(0xFF818CF8) : const Color(0xFF94A3B8)),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                "${date.day}",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSelected ? Colors.white : Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: hasEvents
+                                      ? (isSelected
+                                          ? Colors.white
+                                          : (useIOSStyle ? const Color(0xFF30D158) : const Color(0xFF34D399)))
+                                      : Colors.transparent,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      );
+                    }),
                   ),
                 );
-              }),
+              },
             ),
           ),
 
