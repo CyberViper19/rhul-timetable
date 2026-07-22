@@ -415,6 +415,37 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
     return null;
   }
 
+  Color _getEventTypeColor(String type, bool useIOSStyle) {
+    final lower = type.toLowerCase();
+
+    // Assessments / Exams -> Orange
+    if (lower.contains('assessment') ||
+        lower.contains('exam') ||
+        lower.contains('test') ||
+        lower.contains('quiz') ||
+        lower.contains('coursework') ||
+        lower.contains('assignment') ||
+        lower.contains('submission') ||
+        lower.contains('viva') ||
+        lower.contains('presentation')) {
+      return useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B);
+    }
+
+    // Optional Attendance / Drop ins -> Green
+    if (lower.contains('optional') ||
+        lower.contains('drop') ||
+        lower.contains('drop-in') ||
+        lower.contains('dropin') ||
+        lower.contains('office hour') ||
+        lower.contains('consultation') ||
+        lower.contains('support')) {
+      return useIOSStyle ? const Color(0xFF34C759) : const Color(0xFF10B981);
+    }
+
+    // Default / Regular Classes -> Blue/Indigo
+    return useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8);
+  }
+
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
@@ -785,100 +816,115 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                       itemCount: dayEvents.length,
                       itemBuilder: (context, index) {
                         final event = dayEvents[index];
+                        final typeColor = _getEventTypeColor(event.type, useIOSStyle);
+
                         return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
-                          side: BorderSide(
-                            color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
+                            side: BorderSide(
+                              color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
+                            ),
                           ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      event.module,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                          clipBehavior: Clip.antiAlias,
+                          child: IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Container(
+                                  width: 5,
+                                  color: typeColor,
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                event.module,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: typeColor.withValues(alpha: 0.2),
+                                                borderRadius: BorderRadius.circular(6),
+                                              ),
+                                              child: Text(
+                                                event.type,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: typeColor,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              useIOSStyle ? CupertinoIcons.clock : Icons.access_time_rounded,
+                                              size: 14,
+                                              color: const Color(0xFF94A3B8),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              "${event.start} - ${event.finish}",
+                                              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Icon(
+                                              useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
+                                              size: 14,
+                                              color: const Color(0xFF94A3B8),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              event.location,
+                                              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
+                                            ),
+                                          ],
+                                        ),
+                                        if (event.staff.isNotEmpty) ...[
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
+                                                size: 14,
+                                                color: const Color(0xFF94A3B8),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                event.staff,
+                                                style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
-                                          .withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      event.type,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    useIOSStyle ? CupertinoIcons.clock : Icons.access_time_rounded,
-                                    size: 14,
-                                    color: const Color(0xFF94A3B8),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    "${event.start} - ${event.finish}",
-                                    style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Icon(
-                                    useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
-                                    size: 14,
-                                    color: const Color(0xFF94A3B8),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    event.location,
-                                    style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                              if (event.staff.isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
-                                      size: 14,
-                                      color: const Color(0xFF94A3B8),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      event.staff,
-                                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
-                                    ),
-                                  ],
                                 ),
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
             ),
           ),
         ],
