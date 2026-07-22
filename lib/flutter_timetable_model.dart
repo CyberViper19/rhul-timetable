@@ -152,6 +152,17 @@ class TimetableCacheManager {
     return box.get('has_completed_permissions_onboarding') == 'true';
   }
 
+  Future<void> setAppTheme(String themeKey) async {
+    final box = Hive.box<String>(_boxName);
+    await box.put('app_theme', themeKey);
+  }
+
+  String getAppTheme() {
+    final box = Hive.box<String>(_boxName);
+    final theme = box.get('app_theme');
+    return (theme == null || theme.isEmpty) ? 'rhul' : theme;
+  }
+
   Future<void> clearCache() async {
     final box = Hive.box<String>(_boxName);
     await box.clear();

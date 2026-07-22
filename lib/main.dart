@@ -5,11 +5,14 @@ import 'package:flutter/cupertino.dart';
 import 'flutter_timetable_model.dart';
 import 'flutter_timetable_scraper.dart';
 import 'flutter_auth_keystore.dart';
+import 'app_theme_config.dart';
 
 import 'flutter_background_sync.dart';
 import 'flutter_permissions_screen.dart';
 import 'flutter_event_details_dialog.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+final ValueNotifier<String> themeNotifier = ValueNotifier<String>('rhul');
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -27,6 +30,8 @@ void main() async {
   final cacheManager = TimetableCacheManager();
   await cacheManager.init();
 
+  themeNotifier.value = cacheManager.getAppTheme();
+
   if (!kIsWeb) {
     await TimetableBackgroundSyncEngine.initializeBackgroundSync();
   }
@@ -39,19 +44,33 @@ class RHULTimetableApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'RHUL Timetable',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F172A),
-        primaryColor: const Color(0xFF6366F1),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF6366F1),
-          surface: Color(0xFF1E293B),
-        ),
-      ),
-      home: const MainAppWrapper(),
+    return ValueListenableBuilder<String>(
+      valueListenable: themeNotifier,
+      builder: (context, currentThemeKey, _) {
+        final systemBrightness = MediaQuery.platformBrightnessOf(context);
+        final activeTheme = AppThemeConfig.getTheme(currentThemeKey, systemBrightness);
+        final isDark = activeTheme.scaffoldBackgroundColor.computeLuminance() < 0.5;
+
+        return MaterialApp(
+          title: 'RHUL Timetable',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            brightness: isDark ? Brightness.dark : Brightness.light,
+            scaffoldBackgroundColor: activeTheme.scaffoldBackgroundColor,
+            primaryColor: activeTheme.primaryColor,
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: activeTheme.primaryColor,
+                    surface: activeTheme.cardBackgroundColor,
+                  )
+                : ColorScheme.light(
+                    primary: activeTheme.primaryColor,
+                    surface: activeTheme.cardBackgroundColor,
+                  ),
+          ),
+          home: const MainAppWrapper(),
+        );
+      },
     );
   }
 }
@@ -534,10 +553,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
     return null;
   }
 
-  Color _getEventTypeColor(String type, bool useIOSStyle) {
+  Color _getEventTypeColor(String type, AppThemeConfig activeTheme) {
     final lower = type.toLowerCase();
 
-    // Assessments / Exams -> Orange
+    // Assessments / Exams -> Orange/Assessment Color
     if (lower.contains('assessment') ||
         lower.contains('exam') ||
         lower.contains('test') ||
@@ -547,10 +566,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
         lower.contains('submission') ||
         lower.contains('viva') ||
         lower.contains('presentation')) {
-      return const Color(0xFFF59E0B);
+      return activeTheme.assessmentColor;
     }
 
-    // Optional Attendance / Drop ins -> Green
+    // Optional Attendance / Drop ins -> Green/Optional Color
     if (lower.contains('optional') ||
         lower.contains('drop') ||
         lower.contains('drop-in') ||
@@ -558,11 +577,11 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
         lower.contains('office hour') ||
         lower.contains('consultation') ||
         lower.contains('support')) {
-      return const Color(0xFF10B981);
+      return activeTheme.optionalColor;
     }
 
-    // Default / Regular Classes -> Blue/Indigo
-    return const Color(0xFF818CF8);
+    // Default / Regular Classes -> Accent/Secondary Color
+    return activeTheme.secondaryColor;
   }
 
   List<_TimelineSlot> _buildTimelineSlots(List<TimetableEvent> events) {
@@ -628,39 +647,43 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
-    const primaryColor = Color(0xFF6366F1);
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
+
+    final primaryColor = activeTheme.primaryColor;
     final dayEvents = _filteredEventsForDay;
     final startOfWeek = _getStartOfWeek(_selectedDate);
     final academicWeek = _getAcademicWeekForSelectedDate();
 
     return Scaffold(
+      backgroundColor: activeTheme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: activeTheme.cardBackgroundColor,
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               "RHUL Timetable",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: activeTheme.textColor),
             ),
             Text(
               _getFormattedLastSyncTime(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: Color(0xFF818CF8),
+                color: activeTheme.secondaryColor,
               ),
             ),
           ],
         ),
         actions: [
-          _SyncIconButton(onRefresh: widget.onRefresh),
+          _SyncIconButton(onRefresh: widget.onRefresh, color: activeTheme.secondaryColor),
           IconButton(
             icon: Icon(
               useIOSStyle ? CupertinoIcons.today : Icons.today_rounded,
               size: 22,
             ),
-            color: const Color(0xFF818CF8),
+            color: activeTheme.secondaryColor,
             tooltip: "Jump to Today",
             onPressed: _jumpToToday,
           ),
@@ -669,15 +692,15 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
       ),
 
       drawer: Drawer(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: activeTheme.cardBackgroundColor,
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
+              decoration: BoxDecoration(
+                color: activeTheme.containerBackgroundColor,
               ),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: const Color(0xFF6366F1),
+                backgroundColor: activeTheme.primaryColor,
                 child: Icon(
                   useIOSStyle ? CupertinoIcons.person_fill : Icons.person_rounded,
                   color: Colors.white,
@@ -686,22 +709,22 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
               ),
               accountName: Text(
                 widget.credentials?.username ?? "Student User",
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: activeTheme.textColor),
               ),
               accountEmail: Text(
                 "Secured via ${PlatformSecurityInfo.storageEngineName}",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF94A3B8),
+                  color: activeTheme.subtitleTextColor,
                 ),
               ),
             ),
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_month_rounded,
-                color: const Color(0xFF6366F1),
+                color: activeTheme.primaryColor,
               ),
-              title: const Text("My Schedule", style: TextStyle(color: Colors.white)),
+              title: Text("My Schedule", style: TextStyle(color: activeTheme.textColor)),
               onTap: () {
                 Navigator.pop(context);
                 _jumpToToday();
@@ -710,9 +733,9 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.doc_text : Icons.assignment_rounded,
-                color: const Color(0xFFF59E0B),
+                color: activeTheme.assessmentColor,
               ),
-              title: const Text("My Assessments", style: TextStyle(color: Colors.white)),
+              title: Text("My Assessments", style: TextStyle(color: activeTheme.textColor)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -729,9 +752,9 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.gear : Icons.settings_rounded,
-                color: const Color(0xFF6366F1),
+                color: activeTheme.primaryColor,
               ),
-              title: const Text("Settings", style: TextStyle(color: Colors.white)),
+              title: Text("Settings", style: TextStyle(color: activeTheme.textColor)),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -745,16 +768,16 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.arrow_clockwise : Icons.refresh_rounded,
-                color: const Color(0xFF6366F1),
+                color: activeTheme.primaryColor,
               ),
-              title: const Text("Sync Now", style: TextStyle(color: Colors.white)),
+              title: Text("Sync Now", style: TextStyle(color: activeTheme.textColor)),
               onTap: () async {
                 Navigator.pop(context);
                 await widget.onRefresh();
               },
             ),
             const Spacer(),
-            const Divider(color: Color(0xFF334155)),
+            Divider(color: activeTheme.borderColor),
 
             ListTile(
               leading: const Icon(
@@ -780,7 +803,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
           // Month Navigation Bar & Calendar Picker Trigger
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            color: const Color(0xFF1E293B),
+            color: activeTheme.cardBackgroundColor,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -791,7 +814,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     useIOSStyle ? CupertinoIcons.chevron_left_circle_fill : Icons.arrow_back_ios_new_rounded,
                     size: 22,
                   ),
-                  color: const Color(0xFF6366F1),
+                  color: activeTheme.primaryColor,
                   tooltip: "Previous Week",
                   onPressed: _previousWeek,
                 ),
@@ -801,10 +824,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                        color: activeTheme.primaryColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFF6366F1).withValues(alpha: 0.4),
+                          color: activeTheme.primaryColor.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -814,10 +837,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                             child: Text(
                               "${_monthName(_selectedDate.month)} ${_selectedDate.year}",
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF818CF8),
+                                color: activeTheme.secondaryColor,
                               ),
                             ),
                           ),
@@ -826,15 +849,15 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF6366F1).withValues(alpha: 0.25),
+                                color: activeTheme.primaryColor.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 "Wk $academicWeek",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFA5B4FC),
+                                  color: activeTheme.secondaryColor,
                                 ),
                               ),
                             ),
@@ -843,7 +866,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           Icon(
                             useIOSStyle ? CupertinoIcons.chevron_down : Icons.arrow_drop_down_rounded,
                             size: 16,
-                            color: const Color(0xFF818CF8),
+                            color: activeTheme.secondaryColor,
                           ),
                         ],
                       ),
@@ -857,7 +880,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     useIOSStyle ? CupertinoIcons.chevron_right_circle_fill : Icons.arrow_forward_ios_rounded,
                     size: 22,
                   ),
-                  color: const Color(0xFF6366F1),
+                  color: activeTheme.primaryColor,
                   tooltip: "Next Week",
                   onPressed: _nextWeek,
                 ),
@@ -882,7 +905,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                 final weekStart = _dateFromPageIndex(pageIndex);
                 return Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                  color: const Color(0xFF0F172A),
+                  color: activeTheme.containerBackgroundColor,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: List.generate(7, (index) {
@@ -906,15 +929,15 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? const Color(0xFF6366F1)
-                                : (isToday ? const Color(0xFF1E293B) : Colors.transparent),
+                                ? activeTheme.primaryColor
+                                : (isToday ? activeTheme.cardBackgroundColor : Colors.transparent),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
                                   ? Colors.transparent
                                   : (isToday
-                                      ? const Color(0xFF6366F1)
-                                      : const Color(0xFF334155)),
+                                      ? activeTheme.primaryColor
+                                      : activeTheme.borderColor),
                             ),
                           ),
                           child: Column(
@@ -927,7 +950,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: isSelected
                                       ? Colors.white
-                                      : (isToday ? const Color(0xFF818CF8) : const Color(0xFF94A3B8)),
+                                      : (isToday ? activeTheme.secondaryColor : activeTheme.subtitleTextColor),
                                 ),
                               ),
                               const SizedBox(height: 3),
@@ -936,7 +959,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: isSelected ? Colors.white : Colors.white,
+                                  color: isSelected ? Colors.white : activeTheme.textColor,
                                 ),
                               ),
                               const SizedBox(height: 3),
@@ -948,7 +971,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                   color: hasEvents
                                       ? (isSelected
                                           ? Colors.white
-                                          : const Color(0xFF34D399))
+                                          : activeTheme.optionalColor)
                                       : Colors.transparent,
                                 ),
                               ),
@@ -963,13 +986,13 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ),
           ),
 
-          const Divider(height: 1, color: Color(0xFF334155)),
+          Divider(height: 1, color: activeTheme.borderColor),
 
           // Events List
           Expanded(
             child: RefreshIndicator(
-              color: const Color(0xFF6366F1),
-              backgroundColor: const Color(0xFF1E293B),
+              color: activeTheme.primaryColor,
+              backgroundColor: activeTheme.cardBackgroundColor,
               onRefresh: widget.onRefresh,
               child: dayEvents.isEmpty
                   ? ListView(
@@ -984,12 +1007,12 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                 Icon(
                                   useIOSStyle ? CupertinoIcons.moon_stars : Icons.event_available_rounded,
                                   size: 48,
-                                  color: const Color(0xFF64748B),
+                                  color: activeTheme.subtitleTextColor,
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
                                   "No classes scheduled for ${_weekdayShort(_selectedDate.weekday)}, ${_selectedDate.day} ${_monthName(_selectedDate.month)}.",
-                                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                                  style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 14),
                                 ),
                               ],
                             ),
@@ -1021,15 +1044,15 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                       Icon(
                                         useIOSStyle ? CupertinoIcons.pause_circle_fill : Icons.timer_outlined,
                                         size: 18,
-                                        color: const Color(0xFF64748B),
+                                        color: activeTheme.subtitleTextColor,
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
                                         "${slot.startTime} – ${slot.finishTime}",
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFF94A3B8),
+                                          color: activeTheme.subtitleTextColor,
                                           letterSpacing: -0.5,
                                         ),
                                       ),
@@ -1037,14 +1060,14 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF334155).withValues(alpha: 0.5),
+                                          color: activeTheme.borderColor.withValues(alpha: 0.5),
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Text(
                                           durationText,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 11,
-                                            color: Color(0xFF94A3B8),
+                                            color: activeTheme.subtitleTextColor,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -1057,10 +1080,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0F172A),
+                                      color: activeTheme.containerBackgroundColor,
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
-                                        color: const Color(0xFF334155).withValues(alpha: 0.6),
+                                        color: activeTheme.borderColor.withValues(alpha: 0.6),
                                         width: 1.2,
                                       ),
                                     ),
@@ -1070,8 +1093,8 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                         const SizedBox(width: 12),
                                         Text(
                                           "Free Break ($durationText)",
-                                          style: const TextStyle(
-                                            color: Color(0xFF94A3B8),
+                                          style: TextStyle(
+                                            color: activeTheme.subtitleTextColor,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -1084,7 +1107,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                             );
                           } else {
                             final event = slot.event!;
-                            final typeColor = _getEventTypeColor(event.type, useIOSStyle);
+                            final typeColor = _getEventTypeColor(event.type, activeTheme);
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 20),
@@ -1102,10 +1125,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                       const SizedBox(width: 8),
                                       Text(
                                         "${event.start} – ${event.finish}",
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 22,
                                           fontWeight: FontWeight.w900,
-                                          color: Colors.white,
+                                          color: activeTheme.textColor,
                                           letterSpacing: -0.5,
                                         ),
                                       ),
@@ -1117,11 +1140,11 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                     onTap: () => _showEventDetailsModal(context, event, typeColor),
                                     child: Card(
                                       margin: EdgeInsets.zero,
-                                      color: const Color(0xFF1E293B),
+                                      color: activeTheme.cardBackgroundColor,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
-                                        side: const BorderSide(
-                                          color: Color(0xFF334155),
+                                        side: BorderSide(
+                                          color: activeTheme.borderColor,
                                         ),
                                       ),
                                       clipBehavior: Clip.antiAlias,
@@ -1812,85 +1835,165 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color(0xFF6366F1);
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
+    final primaryColor = activeTheme.primaryColor;
 
     return Scaffold(
+      backgroundColor: activeTheme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: activeTheme.cardBackgroundColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           "Settings",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold, color: activeTheme.textColor),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Section Header: App Theme
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              "APP THEME",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+                color: activeTheme.subtitleTextColor,
+              ),
+            ),
+          ),
+          Card(
+            color: activeTheme.cardBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: activeTheme.borderColor,
+              ),
+            ),
+            child: Column(
+              children: [
+                _buildThemeTile(
+                  title: "RHUL Theme (Default)",
+                  subtitle: "Royal Holloway Orange & Dark Theme",
+                  themeKey: "rhul",
+                  accentColor: const Color(0xFFF97316),
+                  activeTheme: activeTheme,
+                ),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeTile(
+                  title: "Colourful",
+                  subtitle: "Multi-accent Slate & Indigo Theme",
+                  themeKey: "colourful",
+                  accentColor: const Color(0xFF6366F1),
+                  activeTheme: activeTheme,
+                ),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeTile(
+                  title: "System Default",
+                  subtitle: "Automatically matches your device light/dark mode",
+                  themeKey: "system",
+                  accentColor: const Color(0xFF3B82F6),
+                  activeTheme: activeTheme,
+                ),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeTile(
+                  title: "Dark Mode",
+                  subtitle: "Sleek classic dark theme",
+                  themeKey: "dark",
+                  accentColor: const Color(0xFF3B82F6),
+                  activeTheme: activeTheme,
+                ),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeTile(
+                  title: "Light Mode",
+                  subtitle: "Clean crisp light theme",
+                  themeKey: "light",
+                  accentColor: const Color(0xFFE55B13),
+                  activeTheme: activeTheme,
+                ),
+                if (!kIsWeb && Platform.isIOS) ...[
+                  Divider(height: 1, color: activeTheme.borderColor),
+                  _buildThemeTile(
+                    title: "iOS Default",
+                    subtitle: "Classic Apple Cupertino dark style",
+                    themeKey: "ios_default",
+                    accentColor: const Color(0xFF0A84FF),
+                    activeTheme: activeTheme,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
           // Section Header: Notifications
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               "NOTIFICATION PREFERENCES",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.1,
-                color: Color(0xFF94A3B8),
+                color: activeTheme.subtitleTextColor,
               ),
             ),
           ),
 
           Card(
-            color: const Color(0xFF1E293B),
+            color: activeTheme.cardBackgroundColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(
-                color: Color(0xFF334155),
+              side: BorderSide(
+                color: activeTheme.borderColor,
               ),
             ),
             child: Column(
               children: [
                 SwitchListTile(
                   activeColor: primaryColor,
-                  title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Notify if a lecture or assessment is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: const Icon(Icons.notifications_active_rounded, color: primaryColor),
+                  title: Text("Cancellation Alerts", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
+                  subtitle: Text("Notify if a lecture or assessment is cancelled", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                  secondary: Icon(Icons.notifications_active_rounded, color: primaryColor),
                   value: _cancellations,
                   onChanged: (val) {
                     setState(() => _cancellations = val);
                     _saveSettings();
                   },
                 ),
-                const Divider(height: 1, color: Color(0xFF334155)),
+                Divider(height: 1, color: activeTheme.borderColor),
                 SwitchListTile(
                   activeColor: primaryColor,
-                  title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Notify when a class moves to a different room", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: const Icon(Icons.location_on_rounded, color: primaryColor),
+                  title: Text("Room Location Changes", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
+                  subtitle: Text("Notify when a class moves to a different room", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                  secondary: Icon(Icons.location_on_rounded, color: primaryColor),
                   value: _roomChanges,
                   onChanged: (val) {
                     setState(() => _roomChanges = val);
                     _saveSettings();
                   },
                 ),
-                const Divider(height: 1, color: Color(0xFF334155)),
+                Divider(height: 1, color: activeTheme.borderColor),
                 SwitchListTile(
                   activeColor: primaryColor,
-                  title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Notify when a lecture or exam time changes", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: const Icon(Icons.access_time_filled_rounded, color: primaryColor),
+                  title: Text("Reschedule Alerts", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
+                  subtitle: Text("Notify when a lecture or exam time changes", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                  secondary: Icon(Icons.access_time_filled_rounded, color: primaryColor),
                   value: _reschedules,
                   onChanged: (val) {
                     setState(() => _reschedules = val);
                     _saveSettings();
                   },
                 ),
-                const Divider(height: 1, color: Color(0xFF334155)),
+                Divider(height: 1, color: activeTheme.borderColor),
                 SwitchListTile(
                   activeColor: primaryColor,
-                  title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  subtitle: const Text("Receive countdown reminders for upcoming assessments", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: const Icon(Icons.assignment_rounded, color: Color(0xFFF59E0B)),
+                  title: Text("Assessment Reminders", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
+                  subtitle: Text("Receive countdown reminders for upcoming assessments", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                  secondary: Icon(Icons.assignment_rounded, color: activeTheme.assessmentColor),
                   value: _assessmentReminders,
                   onChanged: (val) {
                     setState(() {
@@ -1907,8 +2010,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       ? Container(
                           width: double.infinity,
                           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 4),
-                          decoration: const BoxDecoration(
-                            border: Border(top: BorderSide(color: Color(0xFF334155), width: 1)),
+                          decoration: BoxDecoration(
+                            border: Border(top: BorderSide(color: activeTheme.borderColor, width: 1)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1916,11 +2019,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                               const SizedBox(height: 8),
                               Text(
                                 "REMINDER INTERVALS",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1.0,
-                                  color: Color(0xFF94A3B8),
+                                  color: activeTheme.subtitleTextColor,
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -1937,12 +2040,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                                       selected: isSelected,
                                       label: Text(label),
                                       labelStyle: TextStyle(
-                                        color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+                                        color: isSelected ? Colors.white : activeTheme.textColor,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                         fontSize: 12,
                                       ),
                                       selectedColor: primaryColor,
-                                      backgroundColor: const Color(0xFF0F172A),
+                                      backgroundColor: activeTheme.containerBackgroundColor,
                                       checkmarkColor: Colors.white,
                                       onSelected: (_) => _toggleInterval(hours),
                                     );
@@ -1955,7 +2058,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
-                                    backgroundColor: primaryColor.withValues(alpha: 0.35),
+                                    backgroundColor: primaryColor.withValues(alpha: 0.85),
                                     onPressed: _showAddCustomIntervalDialog,
                                   ),
                                 ],
@@ -1970,31 +2073,31 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ),
           const SizedBox(height: 24),
           // Section Header: System Permissions
-          const Padding(
-            padding: EdgeInsets.only(left: 4, bottom: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               "SYSTEM PERMISSIONS & BACKGROUND SYNC",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.1,
-                color: Color(0xFF94A3B8),
+                color: activeTheme.subtitleTextColor,
               ),
             ),
           ),
           Card(
-            color: const Color(0xFF1E293B),
+            color: activeTheme.cardBackgroundColor,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: const BorderSide(
-                color: Color(0xFF334155),
+              side: BorderSide(
+                color: activeTheme.borderColor,
               ),
             ),
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.notifications_none_rounded, color: primaryColor),
-                  title: const Text("System Push Notifications", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  leading: Icon(Icons.notifications_none_rounded, color: primaryColor),
+                  title: Text("System Push Notifications", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
                   subtitle: Text(
                     _notificationGranted ? "Permission Granted" : "Permission Denied (Notifications Disabled)",
                     style: TextStyle(color: _notificationGranted ? const Color(0xFF10B981) : const Color(0xFFEF4444), fontSize: 12),
@@ -2011,17 +2114,17 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       }
                       await _loadSystemPermissions();
                     },
-                    child: Text(_notificationGranted ? "Manage" : "Enable", style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                    child: Text(_notificationGranted ? "Manage" : "Enable", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 if (!kIsWeb && Platform.isAndroid) ...[
-                  const Divider(height: 1, color: Color(0xFF334155)),
+                  Divider(height: 1, color: activeTheme.borderColor),
                   ListTile(
                     leading: const Icon(Icons.battery_saver_rounded, color: Color(0xFF10B981)),
-                    title: const Text("Unrestricted Battery Optimization", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    title: Text("Unrestricted Battery Optimization", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       _batteryGranted ? "Unrestricted (Background Sync active)" : "Optimized (Sync may be delayed by OS)",
-                      style: TextStyle(color: _batteryGranted ? const Color(0xFF10B981) : const Color(0xFFF59E0B), fontSize: 12),
+                      style: TextStyle(color: _batteryGranted ? const Color(0xFF10B981) : activeTheme.assessmentColor, fontSize: 12),
                     ),
                     trailing: TextButton(
                       onPressed: () async {
@@ -2035,13 +2138,64 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                         }
                         await _loadSystemPermissions();
                       },
-                      child: Text(_batteryGranted ? "Manage" : "Disable", style: const TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
+                      child: Text(_batteryGranted ? "Manage" : "Disable", style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
               ],
             ),
           ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeTile({
+    required String title,
+    required String subtitle,
+    required String themeKey,
+    required Color accentColor,
+    required AppThemeConfig activeTheme,
+  }) {
+    final isSelected = themeNotifier.value == themeKey;
+
+    return ListTile(
+      onTap: () async {
+        await _cacheManager.setAppTheme(themeKey);
+        themeNotifier.value = themeKey;
+        setState(() {});
+      },
+      leading: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: accentColor,
+          shape: BoxShape.circle,
+        ),
+        child: isSelected
+            ? const Icon(Icons.check, size: 16, color: Colors.white)
+            : null,
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: activeTheme.textColor,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: activeTheme.subtitleTextColor,
+          fontSize: 12,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check_circle_rounded, color: activeTheme.primaryColor)
+          : null,
+    );
+  }
           const SizedBox(height: 24),
         ],
       ),
