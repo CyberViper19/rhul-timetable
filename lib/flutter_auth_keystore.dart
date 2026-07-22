@@ -360,21 +360,24 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: useIOSStyle
-                        ? CupertinoSwitch(
+                  useIOSStyle
+                      ? Transform.scale(
+                          scale: 0.8,
+                          child: CupertinoSwitch(
                             value: _keepLoggedIn,
                             activeTrackColor: const Color(0xFF0A84FF),
                             onChanged: (val) => setState(() => _keepLoggedIn = val),
-                          )
-                        : Checkbox(
+                          ),
+                        )
+                      : SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: Checkbox(
                             value: _keepLoggedIn,
                             activeColor: const Color(0xFF6366F1),
                             onChanged: (val) => setState(() => _keepLoggedIn = val ?? true),
                           ),
-                  ),
+                        ),
                   const SizedBox(width: 12),
                   Text(
                     "Keep me logged in",
