@@ -1199,10 +1199,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                                         Expanded(
                                                           child: Text(
                                                             event.module,
-                                                            style: const TextStyle(
+                                                            style: TextStyle(
                                                               fontSize: 17,
                                                               fontWeight: FontWeight.bold,
-                                                              color: Colors.white,
+                                                              color: activeTheme.textColor,
                                                             ),
                                                           ),
                                                         ),
@@ -1229,13 +1229,13 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                                         Icon(
                                                           useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
                                                           size: 15,
-                                                          color: const Color(0xFF94A3B8),
+                                                          color: activeTheme.subtitleTextColor,
                                                         ),
                                                         const SizedBox(width: 6),
                                                         Expanded(
                                                           child: Text(
                                                             event.location,
-                                                            style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13, fontWeight: FontWeight.w500),
+                                                            style: TextStyle(color: activeTheme.textColor, fontSize: 13, fontWeight: FontWeight.w500),
                                                             overflow: TextOverflow.ellipsis,
                                                           ),
                                                         ),
@@ -1248,12 +1248,12 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                                           Icon(
                                                             useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
                                                             size: 15,
-                                                            color: const Color(0xFF94A3B8),
+                                                            color: activeTheme.subtitleTextColor,
                                                           ),
                                                           const SizedBox(width: 6),
                                                           Text(
                                                             event.staff,
-                                                            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                                                            style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12),
                                                           ),
                                                         ],
                                                       ),
