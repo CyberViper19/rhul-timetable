@@ -19,18 +19,71 @@ class EventDetailsModalSheet extends StatelessWidget {
 
   LatLng _getBuildingCoordinates(String location) {
     final loc = location.toLowerCase();
-    if (loc.contains('founder')) return const LatLng(51.4254, -0.5636);
-    if (loc.contains('windsor')) return const LatLng(51.4248, -0.5631);
-    if (loc.contains('davison') || loc.contains('library')) return const LatLng(51.4243, -0.5645);
-    if (loc.contains('shilling')) return const LatLng(51.4262, -0.5620);
-    if (loc.contains('moore')) return const LatLng(51.4242, -0.5619);
-    if (loc.contains('bourne')) return const LatLng(51.4265, -0.5615);
-    if (loc.contains('queen')) return const LatLng(51.4268, -0.5608);
-    if (loc.contains('mccrea')) return const LatLng(51.4257, -0.5625);
-    if (loc.contains('international')) return const LatLng(51.4250, -0.5628);
-    if (loc.contains('bedford')) return const LatLng(51.4260, -0.5610);
-    if (loc.contains('art')) return const LatLng(51.4253, -0.5640);
-    if (loc.contains('wetton')) return const LatLng(51.4270, -0.5638);
+
+    // Founders Building & Picture Gallery
+    if (loc.contains('founder') || loc.contains('fndr') || loc.contains('fnd') || loc.contains('picture') || loc.contains('crossland') || loc.contains('boiler')) {
+      return const LatLng(51.4254, -0.5636);
+    }
+    // Windsor Building & Auditorium
+    if (loc.contains('windsor') || loc.contains('win') || loc.contains('auditorium')) {
+      return const LatLng(51.4248, -0.5631);
+    }
+    // Emily Wilding Davison Building & Library
+    if (loc.contains('davison') || loc.contains('ewd') || loc.contains('library')) {
+      return const LatLng(51.4243, -0.5645);
+    }
+    // Shilling Building
+    if (loc.contains('shilling') || loc.contains('shil') || loc.startsWith('sh')) {
+      return const LatLng(51.4262, -0.5620);
+    }
+    // Moore Building
+    if (loc.contains('moore') || loc.contains('mr') || loc.startsWith('mr-')) {
+      return const LatLng(51.4242, -0.5619);
+    }
+    // Bourne Building & Lecture Theatre (BLT)
+    if (loc.contains('bourne') || loc.contains('brn') || loc.contains('blt')) {
+      return const LatLng(51.4265, -0.5615);
+    }
+    // Queens Building
+    if (loc.contains('queen') || loc.contains('qns') || loc.contains('qn')) {
+      return const LatLng(51.4268, -0.5608);
+    }
+    // McCrea Building
+    if (loc.contains('mccrea') || loc.contains('mc') || loc.contains('mcc')) {
+      return const LatLng(51.4257, -0.5625);
+    }
+    // International Building
+    if (loc.contains('international') || loc.contains('intl') || loc.contains('ib')) {
+      return const LatLng(51.4250, -0.5628);
+    }
+    // Bedford Building
+    if (loc.contains('bedford') || loc.contains('bed')) {
+      return const LatLng(51.4260, -0.5610);
+    }
+    // Arts Building
+    if (loc.contains('arts') || loc.contains('art') || loc.startsWith('a-')) {
+      return const LatLng(51.4253, -0.5640);
+    }
+    // Wetton's Annex
+    if (loc.contains('wetton') || loc.contains('wet')) {
+      return const LatLng(51.4270, -0.5638);
+    }
+    // Horton Building
+    if (loc.contains('horton') || loc.contains('hort')) {
+      return const LatLng(51.4259, -0.5618);
+    }
+    // Tolansky Building
+    if (loc.contains('tolansky') || loc.contains('tol')) {
+      return const LatLng(51.4264, -0.5612);
+    }
+    // Munro Fox
+    if (loc.contains('munro') || loc.contains('fox') || loc.contains('mf')) {
+      return const LatLng(51.4266, -0.5618);
+    }
+    // Sports Centre / Gym / Sports Hall
+    if (loc.contains('sport') || loc.contains('gym')) {
+      return const LatLng(51.4235, -0.5655);
+    }
 
     // Default RHUL Campus Center
     return const LatLng(51.4256, -0.5631);
@@ -49,17 +102,24 @@ class EventDetailsModalSheet extends StatelessWidget {
       return;
     }
 
-    final query = "${event.location}, Royal Holloway University of London, Egham";
-    final url = "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}";
-    final uri = Uri.parse(url);
+    final coords = _getBuildingCoordinates(event.location);
+    final String cleanLoc = event.location.replaceAll('-', ' ');
+    final Uri googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=${coords.latitude},${coords.longitude}+(${Uri.encodeComponent('$cleanLoc, Royal Holloway University')})");
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Could not launch Google Maps")),
-        );
+    try {
+      final launched = await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      try {
+        await launchUrl(googleMapsUrl, mode: LaunchMode.inAppWebView);
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Could not launch maps: $e")),
+          );
+        }
       }
     }
   }
