@@ -1,4 +1,4 @@
-name: iOS Unsigned Build
+name: Build iOS and Android
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 jobs:
   build-ios:
+    name: Build iOS IPA
     runs-on: macos-latest
 
     steps:
@@ -28,10 +29,41 @@ jobs:
         run: |
           mkdir Payload
           cp -R build/ios/iphoneos/Runner.app Payload
-          zip -r unsigned_app.ipa Payload
+          zip -r RHUL_Timetable.ipa Payload
           
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: IOS-Unsigned-App
-          path: unsigned_app.ipa
+          name: iOS-RHUL-Timetable
+          path: RHUL_Timetable.ipa
+
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-RHUL-Timetable
+          path: build/app/outputs/flutter-apk/app-release.apk
