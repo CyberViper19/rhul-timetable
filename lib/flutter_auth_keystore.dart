@@ -326,133 +326,128 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.opaque,
         child: SafeArea(
-          child: AnimatedPadding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 32),
-                  Icon(
-                    PlatformSecurityInfo.platformSecurityIcon,
-                    size: 64,
-                    color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 32),
+                Icon(
+                  PlatformSecurityInfo.platformSecurityIcon,
+                  size: 64,
+                  color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Royal Holloway Login",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: useIOSStyle ? CupertinoColors.white : Colors.white,
+                    fontFamily: useIOSStyle ? ".SF Pro Display" : null,
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "Royal Holloway Login",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: useIOSStyle ? CupertinoColors.white : Colors.white,
-                      fontFamily: useIOSStyle ? ".SF Pro Display" : null,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const PlatformSecurityBadge(),
-                  const SizedBox(height: 32),
-                  _buildPlatformTextField(
-                    controller: _usernameController,
-                    focusNode: _usernameFocusNode,
-                    placeholder: "ZPACxxx",
-                    label: "University Username",
-                    icon: useIOSStyle ? CupertinoIcons.person_fill : Icons.person_rounded,
-                    useIOSStyle: useIOSStyle,
-                  ),
-                  const SizedBox(height: 16),
-                  _buildPlatformTextField(
-                    controller: _passwordController,
-                    focusNode: _passwordFocusNode,
-                    placeholder: "Portal Password",
-                    label: "Portal Password",
-                    icon: useIOSStyle ? CupertinoIcons.lock_fill : Icons.key_rounded,
-                    isObscure: _obscurePassword,
-                    useIOSStyle: useIOSStyle,
-                    suffix: GestureDetector(
-                      onTap: () => setState(() => _obscurePassword = !_obscurePassword),
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 12.0),
-                        child: Icon(
-                          _obscurePassword 
-                              ? (useIOSStyle ? CupertinoIcons.eye_fill : Icons.visibility)
-                              : (useIOSStyle ? CupertinoIcons.eye_slash_fill : Icons.visibility_off),
-                          color: _passwordFocusNode.hasFocus
-                              ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
-                              : (useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8)),
-                          size: 20,
-                        ),
+                ),
+                const SizedBox(height: 16),
+                const PlatformSecurityBadge(),
+                const SizedBox(height: 32),
+                _buildPlatformTextField(
+                  controller: _usernameController,
+                  focusNode: _usernameFocusNode,
+                  placeholder: "ZPACxxx",
+                  label: "University Username",
+                  icon: useIOSStyle ? CupertinoIcons.person_fill : Icons.person_rounded,
+                  useIOSStyle: useIOSStyle,
+                ),
+                const SizedBox(height: 16),
+                _buildPlatformTextField(
+                  controller: _passwordController,
+                  focusNode: _passwordFocusNode,
+                  placeholder: "Portal Password",
+                  label: "Portal Password",
+                  icon: useIOSStyle ? CupertinoIcons.lock_fill : Icons.key_rounded,
+                  isObscure: _obscurePassword,
+                  useIOSStyle: useIOSStyle,
+                  suffix: GestureDetector(
+                    onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12.0),
+                      child: Icon(
+                        _obscurePassword 
+                            ? (useIOSStyle ? CupertinoIcons.eye_fill : Icons.visibility)
+                            : (useIOSStyle ? CupertinoIcons.eye_slash_fill : Icons.visibility_off),
+                        color: _passwordFocusNode.hasFocus
+                            ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
+                            : (useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8)),
+                        size: 20,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      useIOSStyle
-                          ? Transform.scale(
-                              scale: 0.8,
-                              child: CupertinoSwitch(
-                                value: _keepLoggedIn,
-                                activeTrackColor: const Color(0xFF0A84FF),
-                                onChanged: (val) => setState(() => _keepLoggedIn = val),
-                              ),
-                            )
-                          : SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: Checkbox(
-                                value: _keepLoggedIn,
-                                activeColor: const Color(0xFF6366F1),
-                                onChanged: (val) => setState(() => _keepLoggedIn = val ?? true),
-                              ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    useIOSStyle
+                        ? Transform.scale(
+                            scale: 0.8,
+                            child: CupertinoSwitch(
+                              value: _keepLoggedIn,
+                              activeTrackColor: const Color(0xFF0A84FF),
+                              onChanged: (val) => setState(() => _keepLoggedIn = val),
                             ),
-                      const SizedBox(width: 12),
-                      Text(
-                        "Keep me logged in",
-                        style: TextStyle(
-                          color: useIOSStyle ? CupertinoColors.white : Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                          )
+                        : SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: _keepLoggedIn,
+                              activeColor: const Color(0xFF6366F1),
+                              onChanged: (val) => setState(() => _keepLoggedIn = val ?? true),
+                            ),
+                          ),
+                    const SizedBox(width: 12),
+                    Text(
+                      "Keep me logged in",
+                      style: TextStyle(
+                        color: useIOSStyle ? CupertinoColors.white : Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(width: 6),
-                      GestureDetector(
-                        onTap: _showKeepLoggedInInfoDialog,
-                        child: Icon(
-                          useIOSStyle ? CupertinoIcons.info_circle : Icons.info_outline_rounded,
-                          size: 18,
-                          color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.redAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
-                      ),
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: _showKeepLoggedInInfoDialog,
+                      child: Icon(
+                        useIOSStyle ? CupertinoIcons.info_circle : Icons.info_outline_rounded,
+                        size: 18,
+                        color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 32),
-                  _buildPlatformButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    isLoading: _isLoading,
-                    label: "Log In",
-                    useIOSStyle: useIOSStyle,
+                ),
+                if (_errorMessage != null) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                    ),
                   ),
                 ],
-              ),
+                const SizedBox(height: 32),
+                _buildPlatformButton(
+                  onPressed: _isLoading ? null : _handleLogin,
+                  isLoading: _isLoading,
+                  label: "Log In",
+                  useIOSStyle: useIOSStyle,
+                ),
+              ],
             ),
           ),
         ),
@@ -475,26 +470,15 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
     if (useIOSStyle) {
       return AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.identity()..scale(isFocused ? 1.02 : 1.0),
-        transformAlignment: Alignment.center,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
           color: isFocused ? const Color(0xFF2C2C2E) : const Color(0xFF1C1C1E),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isFocused ? accentColor : const Color(0xFF3A3A3C),
-            width: isFocused ? 2.0 : 1.0,
+            width: isFocused ? 1.5 : 1.0,
           ),
-          boxShadow: isFocused
-              ? [
-                  BoxShadow(
-                    color: accentColor.withValues(alpha: 0.35),
-                    blurRadius: 14,
-                    spreadRadius: 1,
-                  ),
-                ]
-              : [],
         ),
         child: CupertinoTextField(
           controller: controller,
@@ -518,16 +502,11 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       );
     } else {
       return AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        transform: Matrix4.identity()..scale(isFocused ? 1.015 : 1.0),
-        transformAlignment: Alignment.center,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          boxShadow: isFocused
-              ? [
-                  BoxShadow(
-                    color: accentColor.withValues(alpha: 0.25),
+        ),
                     blurRadius: 12,
                     spreadRadius: 1,
                   ),

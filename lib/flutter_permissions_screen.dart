@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'flutter_timetable_model.dart';
 
 class OnboardingPermissionsScreen extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -16,11 +17,44 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
   bool _batteryGranted = false;
   bool _isChecking = true;
 
+  bool _cancellations = false;
+  bool _roomChanges = false;
+  bool _reschedules = false;
+  bool _assessmentReminders = false;
+
+  final _cacheManager = TimetableCacheManager();
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _checkCurrentPermissions();
+    _loadNotificationPreferences();
+  }
+
+  void _loadNotificationPreferences() {
+    final settings = _cacheManager.getNotificationSettings();
+    setState(() {
+      _cancellations = settings['cancellations'] as bool;
+      _roomChanges = settings['roomChanges'] as bool;
+      _reschedules = settings['reschedules'] as bool;
+      _assessmentReminders = settings['assessmentReminders'] as bool;
+    });
+  }
+
+  Future<void> _saveAndComplete() async {
+    final existingSettings = _cacheManager.getNotificationSettings();
+    final reminderHours = (existingSettings['reminderHours'] as List?)?.cast<int>() ?? [1, 24];
+
+    await _cacheManager.saveNotificationSettings(
+      cancellations: _cancellations,
+      roomChanges: _roomChanges,
+      reschedules: _reschedules,
+      assessmentReminders: _assessmentReminders,
+      reminderIntervalHours: reminderHours,
+    );
+
+    widget.onCompleted();
   }
 
   @override
@@ -94,7 +128,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +136,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
               Align(
                 alignment: Alignment.topRight,
                 child: TextButton(
-                  onPressed: widget.onCompleted,
+                  onPressed: _saveAndComplete,
                   child: const Text(
                     "Skip",
                     style: TextStyle(
@@ -140,7 +174,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               if (_isChecking)
                 const Center(child: CircularProgressIndicator())
               else ...[
@@ -164,14 +198,85 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                     onPressed: _requestBatteryOptimization,
                     buttonText: "Disable Battery Saver",
                   ),
+                  const SizedBox(height: 24),
                 ],
+
+                // Notification Preferences Selection Section
+                const Text(
+                  "NOTIFICATION ALERTS TO ENABLE",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                    color: Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  color: const Color(0xFF1E293B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(color: Color(0xFF334155)),
+                  ),
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        activeColor: const Color(0xFF6366F1),
+                        title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        subtitle: const Text("Notify if a lecture is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                        secondary: const Icon(Icons.notifications_active_rounded, color: Color(0xFF6366F1), size: 20),
+                        value: _cancellations,
+                        onChanged: (val) => setState(() => _cancellations = val),
+                      ),
+                      const Divider(height: 1, color: Color(0xFF334155)),
+                      SwitchListTile(
+                        activeColor: const Color(0xFF6366F1),
+                        title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        subtitle: const Text("Notify when a class moves rooms", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                        secondary: const Icon(Icons.location_on_rounded, color: Color(0xFF6366F1), size: 20),
+                        value: _roomChanges,
+                        onChanged: (val) => setState(() => _roomChanges = val),
+                      ),
+                      const Divider(height: 1, color: Color(0xFF334155)),
+                      SwitchListTile(
+                        activeColor: const Color(0xFF6366F1),
+                        title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        subtitle: const Text("Notify when class times change", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                        secondary: const Icon(Icons.access_time_filled_rounded, color: Color(0xFF6366F1), size: 20),
+                        value: _reschedules,
+                        onChanged: (val) => setState(() => _reschedules = val),
+                      ),
+                      const Divider(height: 1, color: Color(0xFF334155)),
+                      SwitchListTile(
+                        activeColor: const Color(0xFF6366F1),
+                        title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                        subtitle: const Text("Receive countdown reminders for assessments", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                        secondary: const Icon(Icons.assignment_rounded, color: Color(0xFFF59E0B), size: 20),
+                        value: _assessmentReminders,
+                        onChanged: (val) => setState(() => _assessmentReminders = val),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF0F172A),
+                          borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+                        ),
+                        child: const Text(
+                          "ℹ️ You can change or customize all of these choices anytime later in Settings.",
+                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
-              const Spacer(),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: canContinue ? widget.onCompleted : null,
+                  onPressed: canContinue ? _saveAndComplete : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: canContinue ? const Color(0xFF6366F1) : const Color(0xFF334155),
                     disabledBackgroundColor: const Color(0xFF1E293B),
@@ -190,7 +295,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
             ],
           ),
         ),
