@@ -630,6 +630,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
+    final primaryColor = useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1);
     final dayEvents = _filteredEventsForDay;
     final startOfWeek = _getStartOfWeek(_selectedDate);
     final academicWeek = _getAcademicWeekForSelectedDate();
