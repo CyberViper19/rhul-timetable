@@ -1,23 +1,20 @@
 # 🎓 Royal Holloway Timetable App
 
-[![Download APK](https://img.shields.io/badge/Android-Download%20APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/CyberViper19/rhul-timetable/releases/latest/download/app-release.apk)
-[![Download IPA](https://img.shields.io/badge/iOS-Download%20IPA-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/CyberViper19/rhul-timetable/releases/latest/download/app-release.ipa)
-[![Latest Release](https://img.shields.io/github/v/release/CyberViper19/rhul-timetable?color=orange&label=Latest%20Release&style=for-the-badge)](https://github.com/CyberViper19/rhul-timetable/releases/latest)
+[![Download APK](https://img.shields.io/badge/Android-Download%20APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://raw.githubusercontent.com/CyberViper19/rhul-timetable/main/releases/app-release.apk)
+[![Releases Page](https://img.shields.io/badge/GitHub-Releases%20Page-orange?style=for-the-badge&logo=github&logoColor=white)](https://github.com/CyberViper19/rhul-timetable/releases)
 
 A modern, platform-matched mobile application built with Flutter for Royal Holloway, University of London students. Automatically syncs class schedules, assessment deadlines, room locations, and sends push notifications for timetable changes.
 
 ---
 
-## 📱 Quick Downloads
+## 📱 Direct Downloads
 
-The app is automatically compiled and updated every time new features or bug fixes are committed to this repository.
+Click below to download the compiled application package for your device:
 
-| Platform | Direct Download Link | Format | CI/CD Status |
+| Platform | Direct Download Link | Format | Size |
 |---|---|---|---|
-| 🤖 **Android** | [📥 **Download app-release.apk**](https://github.com/CyberViper19/rhul-timetable/releases/latest/download/app-release.apk) | `.apk` | ![Build Status](https://img.shields.io/github/actions/workflow/status/CyberViper19/rhul-timetable/build.yml?branch=main&label=Build%20APK) |
-| 🍎 **iOS (iPhone/iPad)** | [📥 **Download app-release.ipa**](https://github.com/CyberViper19/rhul-timetable/releases/latest/download/app-release.ipa) | `.ipa` | ![Build Status](https://img.shields.io/github/actions/workflow/status/CyberViper19/rhul-timetable/build.yml?branch=main&label=Build%20IPA) |
-
-> 🔗 **All Releases & Build Artifacts**: You can also browse past releases and builds on the [GitHub Releases Page](https://github.com/CyberViper19/rhul-timetable/releases/latest).
+| 🤖 **Android** | [📥 **Download app-release.apk (Direct)**](https://raw.githubusercontent.com/CyberViper19/rhul-timetable/main/releases/app-release.apk) | `.apk` | ~54.9 MB |
+| 🏷️ **GitHub Releases** | [📦 **Browse All Releases & IPA**](https://github.com/CyberViper19/rhul-timetable/releases) | `.apk` / `.ipa` | Release Assets |
 
 ---
 
@@ -47,14 +44,10 @@ The app is automatically compiled and updated every time new features or bug fix
 ## 📲 How to Install
 
 ### 🤖 Android (.apk)
-1. Tap [Download app-release.apk](https://github.com/CyberViper19/rhul-timetable/releases/latest/download/app-release.apk) on your Android device.
+1. Tap [Download app-release.apk](https://raw.githubusercontent.com/CyberViper19/rhul-timetable/main/releases/app-release.apk) on your Android phone.
 2. Open the downloaded `.apk` file.
 3. If prompted, allow "Install from unknown sources" in your browser settings.
 4. Tap **Install** and open the app!
-
-### 🍎 iOS (.ipa)
-1. Tap [Download app-release.ipa](https://github.com/CyberViper19/rhul-timetable/releases/latest/download/app-release.ipa) on your Mac or iPhone.
-2. Install via **AltStore**, **Sideloadly**, **TrollStore**, or your preferred iOS signing tool / Xcode.
 
 ---
 
