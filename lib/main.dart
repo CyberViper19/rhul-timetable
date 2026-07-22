@@ -39,18 +39,16 @@ class RHULTimetableApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final useIOSStyle = !kIsWeb && Platform.isIOS;
-
     return MaterialApp(
       title: 'RHUL Timetable',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: useIOSStyle ? CupertinoColors.black : const Color(0xFF0F172A),
-        primaryColor: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
-        colorScheme: ColorScheme.dark(
-          primary: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
-          surface: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        primaryColor: const Color(0xFF6366F1),
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF6366F1),
+          surface: Color(0xFF1E293B),
         ),
       ),
       home: const MainAppWrapper(),
@@ -276,7 +274,7 @@ class _SyncIconButtonState extends State<_SyncIconButton> with SingleTickerProvi
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
-    final buttonColor = widget.color ?? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8));
+    final buttonColor = widget.color ?? const Color(0xFF818CF8);
 
     return IconButton(
       icon: RotationTransition(
@@ -549,7 +547,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
         lower.contains('submission') ||
         lower.contains('viva') ||
         lower.contains('presentation')) {
-      return useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B);
+      return const Color(0xFFF59E0B);
     }
 
     // Optional Attendance / Drop ins -> Green
@@ -560,11 +558,11 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
         lower.contains('office hour') ||
         lower.contains('consultation') ||
         lower.contains('support')) {
-      return useIOSStyle ? const Color(0xFF34C759) : const Color(0xFF10B981);
+      return const Color(0xFF10B981);
     }
 
     // Default / Regular Classes -> Blue/Indigo
-    return useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8);
+    return const Color(0xFF818CF8);
   }
 
   List<_TimelineSlot> _buildTimelineSlots(List<TimetableEvent> events) {
@@ -630,14 +628,14 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
-    final primaryColor = useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1);
+    const primaryColor = Color(0xFF6366F1);
     final dayEvents = _filteredEventsForDay;
     final startOfWeek = _getStartOfWeek(_selectedDate);
     final academicWeek = _getAcademicWeekForSelectedDate();
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -648,9 +646,9 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ),
             Text(
               _getFormattedLastSyncTime(),
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
-                color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
+                color: Color(0xFF818CF8),
               ),
             ),
           ],
@@ -662,7 +660,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
               useIOSStyle ? CupertinoIcons.today : Icons.today_rounded,
               size: 22,
             ),
-            color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
+            color: const Color(0xFF818CF8),
             tooltip: "Jump to Today",
             onPressed: _jumpToToday,
           ),
@@ -671,15 +669,15 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
       ),
 
       drawer: Drawer(
-        backgroundColor: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E293B),
         child: Column(
           children: [
             UserAccountsDrawerHeader(
-              decoration: BoxDecoration(
-                color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F172A),
               ),
               currentAccountPicture: CircleAvatar(
-                backgroundColor: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                backgroundColor: const Color(0xFF6366F1),
                 child: Icon(
                   useIOSStyle ? CupertinoIcons.person_fill : Icons.person_rounded,
                   color: Colors.white,
@@ -692,16 +690,16 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
               ),
               accountEmail: Text(
                 "Secured via ${PlatformSecurityInfo.storageEngineName}",
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+                  color: Color(0xFF94A3B8),
                 ),
               ),
             ),
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_month_rounded,
-                color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                color: const Color(0xFF6366F1),
               ),
               title: const Text("My Schedule", style: TextStyle(color: Colors.white)),
               onTap: () {
@@ -712,7 +710,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.doc_text : Icons.assignment_rounded,
-                color: useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B),
+                color: const Color(0xFFF59E0B),
               ),
               title: const Text("My Assessments", style: TextStyle(color: Colors.white)),
               onTap: () {
@@ -731,7 +729,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.gear : Icons.settings_rounded,
-                color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                color: const Color(0xFF6366F1),
               ),
               title: const Text("Settings", style: TextStyle(color: Colors.white)),
               onTap: () {
@@ -747,7 +745,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ListTile(
               leading: Icon(
                 useIOSStyle ? CupertinoIcons.arrow_clockwise : Icons.refresh_rounded,
-                color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                color: const Color(0xFF6366F1),
               ),
               title: const Text("Sync Now", style: TextStyle(color: Colors.white)),
               onTap: () async {
@@ -782,7 +780,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
           // Month Navigation Bar & Calendar Picker Trigger
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+            color: const Color(0xFF1E293B),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -793,7 +791,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     useIOSStyle ? CupertinoIcons.chevron_left_circle_fill : Icons.arrow_back_ios_new_rounded,
                     size: 22,
                   ),
-                  color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                  color: const Color(0xFF6366F1),
                   tooltip: "Previous Week",
                   onPressed: _previousWeek,
                 ),
@@ -803,10 +801,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1)).withValues(alpha: 0.15),
+                        color: const Color(0xFF6366F1).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1)).withValues(alpha: 0.4),
+                          color: const Color(0xFF6366F1).withValues(alpha: 0.4),
                         ),
                       ),
                       child: Row(
@@ -816,10 +814,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                             child: Text(
                               "${_monthName(_selectedDate.month)} ${_selectedDate.year}",
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
-                                color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
+                                color: Color(0xFF818CF8),
                               ),
                             ),
                           ),
@@ -828,15 +826,15 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1)).withValues(alpha: 0.25),
+                                color: const Color(0xFF6366F1).withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 "Wk $academicWeek",
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: useIOSStyle ? const Color(0xFF64D2FF) : const Color(0xFFA5B4FC),
+                                  color: Color(0xFFA5B4FC),
                                 ),
                               ),
                             ),
@@ -845,7 +843,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           Icon(
                             useIOSStyle ? CupertinoIcons.chevron_down : Icons.arrow_drop_down_rounded,
                             size: 16,
-                            color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
+                            color: const Color(0xFF818CF8),
                           ),
                         ],
                       ),
@@ -859,7 +857,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     useIOSStyle ? CupertinoIcons.chevron_right_circle_fill : Icons.arrow_forward_ios_rounded,
                     size: 22,
                   ),
-                  color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                  color: const Color(0xFF6366F1),
                   tooltip: "Next Week",
                   onPressed: _nextWeek,
                 ),
@@ -884,7 +882,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                 final weekStart = _dateFromPageIndex(pageIndex);
                 return Container(
                   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                  color: useIOSStyle ? const Color(0xFF121214) : const Color(0xFF0F172A),
+                  color: const Color(0xFF0F172A),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: List.generate(7, (index) {
@@ -908,14 +906,14 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
+                                ? const Color(0xFF6366F1)
                                 : (isToday ? const Color(0xFF1E293B) : Colors.transparent),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
                                   ? Colors.transparent
                                   : (isToday
-                                      ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
+                                      ? const Color(0xFF6366F1)
                                       : const Color(0xFF334155)),
                             ),
                           ),
@@ -950,7 +948,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                   color: hasEvents
                                       ? (isSelected
                                           ? Colors.white
-                                          : (useIOSStyle ? const Color(0xFF30D158) : const Color(0xFF34D399)))
+                                          : const Color(0xFF34D399))
                                       : Colors.transparent,
                                 ),
                               ),
@@ -970,8 +968,8 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
           // Events List
           Expanded(
             child: RefreshIndicator(
-              color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
-              backgroundColor: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+              color: const Color(0xFF6366F1),
+              backgroundColor: const Color(0xFF1E293B),
               onRefresh: widget.onRefresh,
               child: dayEvents.isEmpty
                   ? ListView(
@@ -1028,10 +1026,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                       const SizedBox(width: 8),
                                       Text(
                                         "${slot.startTime} – ${slot.finishTime}",
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w800,
-                                          color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+                                          color: Color(0xFF94A3B8),
                                           letterSpacing: -0.5,
                                         ),
                                       ),
@@ -1059,7 +1057,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                     width: double.infinity,
                                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                                     decoration: BoxDecoration(
-                                      color: useIOSStyle ? const Color(0xFF141416) : const Color(0xFF0F172A),
+                                      color: const Color(0xFF0F172A),
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
                                         color: const Color(0xFF334155).withValues(alpha: 0.6),
@@ -1119,11 +1117,11 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                                     onTap: () => _showEventDetailsModal(context, event, typeColor),
                                     child: Card(
                                       margin: EdgeInsets.zero,
-                                      color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+                                      color: const Color(0xFF1E293B),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
-                                        side: BorderSide(
-                                          color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
+                                        side: const BorderSide(
+                                          color: Color(0xFF334155),
                                         ),
                                       ),
                                       clipBehavior: Clip.antiAlias,
@@ -1278,7 +1276,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
         title: const Text(
           "My Assessments",
@@ -1325,7 +1323,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                 if (completed.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Card(
-                    color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+                    color: const Color(0xFF1E293B),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: const BorderSide(color: Color(0xFF334155)),
@@ -1392,14 +1390,14 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       color: isCompleted
-          ? (useIOSStyle ? const Color(0xFF141416) : const Color(0xFF151E2E))
-          : (useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B)),
+          ? const Color(0xFF151E2E)
+          : const Color(0xFF1E293B),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
         side: BorderSide(
           color: isCompleted
               ? const Color(0xFF334155).withValues(alpha: 0.5)
-              : (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B)).withValues(alpha: 0.5),
+              : const Color(0xFFF59E0B).withValues(alpha: 0.5),
           width: isCompleted ? 1 : 1.5,
         ),
       ),
@@ -1452,15 +1450,14 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: (useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B))
-                          .withValues(alpha: 0.2),
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       item.type,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 11,
-                        color: useIOSStyle ? const Color(0xFFFF9500) : const Color(0xFFF59E0B),
+                        color: Color(0xFFF59E0B),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1490,8 +1487,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
-                          .withValues(alpha: isCompleted ? 0.1 : 0.2),
+                      color: const Color(0xFF6366F1).withValues(alpha: isCompleted ? 0.1 : 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -1500,7 +1496,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                         fontSize: 10,
                         color: isCompleted
                             ? const Color(0xFF64748B)
-                            : (useIOSStyle ? const Color(0xFF64D2FF) : const Color(0xFFA5B4FC)),
+                            : const Color(0xFFA5B4FC),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1522,6 +1518,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                   style: TextStyle(
                     color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
                     fontSize: 13,
+                    decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -1537,6 +1534,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                     style: TextStyle(
                       color: isCompleted ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
                       fontSize: 13,
+                      decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1648,7 +1646,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   void _ensureIntervalsExist(List<int> hoursList) {
     for (final h in hoursList) {
-      if (!_availableIntervals.any((item) => item['hours'] == h)) {
+      final exists = _availableIntervals.any((item) => item['hours'] == h);
+      if (!exists) {
         _availableIntervals.add({
           'label': _formatIntervalLabel(h),
           'hours': h,
@@ -1659,26 +1658,30 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   String _formatIntervalLabel(int hours) {
-    if (hours % 168 == 0) {
+    if (hours < 24) {
+      return "$hours ${hours == 1 ? 'hour' : 'hours'} before";
+    } else if (hours % 168 == 0) {
       final w = hours ~/ 168;
-      return "$w week${w > 1 ? 's' : ''} before";
+      return "$w ${w == 1 ? 'week' : 'weeks'} before";
     } else if (hours % 24 == 0) {
       final d = hours ~/ 24;
-      return "$d day${d > 1 ? 's' : ''} before";
-    } else {
-      return "$hours hour${hours > 1 ? 's' : ''} before";
+      return "$d ${d == 1 ? 'day' : 'days'} before";
     }
+    return "$hours hours before";
   }
 
   void _loadSettings() {
     final settings = _cacheManager.getNotificationSettings();
+    final savedIntervals = (settings['reminderHours'] as List?)?.cast<int>() ?? [1, 24];
+
+    _ensureIntervalsExist(savedIntervals);
+
     setState(() {
       _cancellations = settings['cancellations'] as bool;
       _roomChanges = settings['roomChanges'] as bool;
       _reschedules = settings['reschedules'] as bool;
       _assessmentReminders = settings['assessmentReminders'] as bool;
-      _reminderHours = (settings['reminderHours'] as List).cast<int>();
-      _ensureIntervalsExist(_reminderHours);
+      _reminderHours = List<int>.from(savedIntervals);
     });
   }
 
@@ -1691,11 +1694,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       reminderIntervalHours: _reminderHours,
     );
 
-    if (_assessmentReminders && !kIsWeb) {
-      try {
-        final syncEngine = TimetableBackgroundSyncEngine();
+    if (!kIsWeb) {
+      final syncEngine = TimetableBackgroundSyncEngine();
+      if (_assessmentReminders) {
         await syncEngine.scheduleAssessmentReminders(widget.events, _reminderHours);
-      } catch (_) {}
+      } else {
+        await syncEngine.cancelAssessmentReminders();
+      }
     }
   }
 
@@ -1716,7 +1721,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   }
 
   void _showAddCustomIntervalDialog() {
-    final useIOSStyle = !kIsWeb && Platform.isIOS;
     final controller = TextEditingController();
     int selectedUnitHours = 1;
 
@@ -1726,7 +1730,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
-              backgroundColor: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+              backgroundColor: const Color(0xFF1E293B),
               title: const Text("Add Custom Reminder", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1745,7 +1749,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                             hintText: "e.g. 4",
                             hintStyle: const TextStyle(color: Color(0xFF64748B)),
                             filled: true,
-                            fillColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                            fillColor: const Color(0xFF0F172A),
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                         ),
@@ -1753,7 +1757,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                       const SizedBox(width: 12),
                       DropdownButton<int>(
                         value: selectedUnitHours,
-                        dropdownColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                        dropdownColor: const Color(0xFF0F172A),
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                         items: const [
                           DropdownMenuItem(value: 1, child: Text("Hours")),
@@ -1777,7 +1781,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                    backgroundColor: const Color(0xFF6366F1),
                   ),
                   onPressed: () {
                     final valText = controller.text.trim();
@@ -1808,12 +1812,11 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    final useIOSStyle = !kIsWeb && Platform.isIOS;
-    final primaryColor = useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1);
+    const primaryColor = Color(0xFF6366F1);
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+        backgroundColor: const Color(0xFF1E293B),
         elevation: 0,
         title: const Text(
           "Settings",
@@ -1824,25 +1827,25 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         padding: const EdgeInsets.all(16),
         children: [
           // Section Header: Notifications
-          Padding(
-            padding: const EdgeInsets.only(left: 4, bottom: 8),
+          const Padding(
+            padding: EdgeInsets.only(left: 4, bottom: 8),
             child: Text(
               "NOTIFICATION PREFERENCES",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.1,
-                color: useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8),
+                color: Color(0xFF94A3B8),
               ),
             ),
           ),
 
           Card(
-            color: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+            color: const Color(0xFF1E293B),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF334155),
+              side: const BorderSide(
+                color: Color(0xFF334155),
               ),
             ),
             child: Column(
@@ -1851,7 +1854,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   activeColor: primaryColor,
                   title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   subtitle: const Text("Notify if a lecture or assessment is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: Icon(useIOSStyle ? CupertinoIcons.bell_fill : Icons.notifications_active_rounded, color: primaryColor),
+                  secondary: const Icon(Icons.notifications_active_rounded, color: primaryColor),
                   value: _cancellations,
                   onChanged: (val) {
                     setState(() => _cancellations = val);
@@ -1863,7 +1866,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   activeColor: primaryColor,
                   title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   subtitle: const Text("Notify when a class moves to a different room", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: Icon(useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded, color: primaryColor),
+                  secondary: const Icon(Icons.location_on_rounded, color: primaryColor),
                   value: _roomChanges,
                   onChanged: (val) {
                     setState(() => _roomChanges = val);
@@ -1875,7 +1878,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   activeColor: primaryColor,
                   title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   subtitle: const Text("Notify when a lecture or exam time changes", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: Icon(useIOSStyle ? CupertinoIcons.clock : Icons.access_time_filled_rounded, color: primaryColor),
+                  secondary: const Icon(Icons.access_time_filled_rounded, color: primaryColor),
                   value: _reschedules,
                   onChanged: (val) {
                     setState(() => _reschedules = val);
@@ -1887,7 +1890,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   activeColor: primaryColor,
                   title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   subtitle: const Text("Receive countdown reminders for upcoming assessments", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                  secondary: Icon(useIOSStyle ? CupertinoIcons.doc_text : Icons.assignment_rounded, color: const Color(0xFFF59E0B)),
+                  secondary: const Icon(Icons.assignment_rounded, color: Color(0xFFF59E0B)),
                   value: _assessmentReminders,
                   onChanged: (val) {
                     setState(() {
