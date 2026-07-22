@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -153,13 +154,13 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
       backgroundColor: activeTheme.scaffoldBackgroundColor,
       body: SafeArea(
         child: _currentStep == 0
-            ? _buildPermissionsStep(context)
+            ? _buildPermissionsStep(context, activeTheme)
             : _buildThemeSelectionStep(context, selectedThemeKey, systemBrightness, activeTheme),
       ),
     );
   }
 
-  Widget _buildPermissionsStep(BuildContext context) {
+  Widget _buildPermissionsStep(BuildContext context, AppThemeConfig activeTheme) {
     final canContinue = _allPermissionsGranted;
 
     return SingleChildScrollView(
@@ -171,10 +172,10 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
             alignment: Alignment.topRight,
             child: TextButton(
               onPressed: _goToThemeStep,
-              child: const Text(
+              child: Text(
                 "Skip",
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: activeTheme.subtitleTextColor,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -182,35 +183,35 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
             ),
           ),
           const SizedBox(height: 12),
-          const Center(
+          Center(
             child: Icon(
               Icons.notifications_active_rounded,
               size: 64,
-              color: Color(0xFF6366F1),
+              color: activeTheme.primaryColor,
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Stay Updated in Real-Time",
             style: TextStyle(
-              color: Colors.white,
+              color: activeTheme.textColor,
               fontSize: 26,
               fontWeight: FontWeight.bold,
               letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             "Grant background permissions to receive instant alerts when lectures are cancelled, rooms are changed, or assessments are approaching.",
             style: TextStyle(
-              color: Color(0xFF94A3B8),
+              color: activeTheme.subtitleTextColor,
               fontSize: 15,
               height: 1.4,
             ),
           ),
           const SizedBox(height: 24),
           if (_isChecking)
-            const Center(child: CircularProgressIndicator())
+            Center(child: CircularProgressIndicator(color: activeTheme.primaryColor))
           else ...[
             _buildPermissionCard(
               title: "Push Notifications",
@@ -219,6 +220,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
               isGranted: _notificationGranted,
               onPressed: _requestNotification,
               buttonText: "Allow Notifications",
+              activeTheme: activeTheme,
             ),
             const SizedBox(height: 16),
             if (Platform.isAndroid) ...[
@@ -229,61 +231,62 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                 isGranted: _batteryGranted,
                 onPressed: _requestBatteryOptimization,
                 buttonText: "Disable Battery Saver",
+                activeTheme: activeTheme,
               ),
               const SizedBox(height: 24),
             ],
-            const Text(
+            Text(
               "NOTIFICATION ALERTS TO ENABLE",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.1,
-                color: Color(0xFF94A3B8),
+                color: activeTheme.subtitleTextColor,
               ),
             ),
             const SizedBox(height: 8),
             Opacity(
               opacity: _notificationGranted ? 1.0 : 0.6,
               child: Card(
-                color: const Color(0xFF1E293B),
+                color: activeTheme.cardBackgroundColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
-                  side: const BorderSide(color: Color(0xFF334155)),
+                  side: BorderSide(color: activeTheme.borderColor),
                 ),
                 child: Column(
                   children: [
                     SwitchListTile(
-                      activeColor: const Color(0xFF6366F1),
-                      title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text("Notify if a lecture is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                      secondary: Icon(Icons.notifications_active_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                      activeColor: activeTheme.primaryColor,
+                      title: Text("Cancellation Alerts", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text("Notify if a lecture is cancelled", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                      secondary: Icon(Icons.notifications_active_rounded, color: _notificationGranted ? activeTheme.primaryColor : activeTheme.subtitleTextColor, size: 20),
                       value: _notificationGranted && _cancellations,
                       onChanged: _notificationGranted ? (val) => setState(() => _cancellations = val) : null,
                     ),
-                    const Divider(height: 1, color: Color(0xFF334155)),
+                    Divider(height: 1, color: activeTheme.borderColor),
                     SwitchListTile(
-                      activeColor: const Color(0xFF6366F1),
-                      title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text("Notify when a class moves rooms", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                      secondary: Icon(Icons.location_on_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                      activeColor: activeTheme.primaryColor,
+                      title: Text("Room Location Changes", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text("Notify when a class moves rooms", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                      secondary: Icon(Icons.location_on_rounded, color: _notificationGranted ? activeTheme.primaryColor : activeTheme.subtitleTextColor, size: 20),
                       value: _notificationGranted && _roomChanges,
                       onChanged: _notificationGranted ? (val) => setState(() => _roomChanges = val) : null,
                     ),
-                    const Divider(height: 1, color: Color(0xFF334155)),
+                    Divider(height: 1, color: activeTheme.borderColor),
                     SwitchListTile(
-                      activeColor: const Color(0xFF6366F1),
-                      title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text("Notify when class times change", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                      secondary: Icon(Icons.access_time_filled_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                      activeColor: activeTheme.primaryColor,
+                      title: Text("Reschedule Alerts", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text("Notify when class times change", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                      secondary: Icon(Icons.access_time_filled_rounded, color: _notificationGranted ? activeTheme.primaryColor : activeTheme.subtitleTextColor, size: 20),
                       value: _notificationGranted && _reschedules,
                       onChanged: _notificationGranted ? (val) => setState(() => _reschedules = val) : null,
                     ),
-                    const Divider(height: 1, color: Color(0xFF334155)),
+                    Divider(height: 1, color: activeTheme.borderColor),
                     SwitchListTile(
-                      activeColor: const Color(0xFF6366F1),
-                      title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                      subtitle: const Text("Receive countdown reminders for assessments.", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                      secondary: Icon(Icons.assignment_rounded, color: _notificationGranted ? const Color(0xFFF59E0B) : const Color(0xFF64748B), size: 20),
+                      activeColor: activeTheme.primaryColor,
+                      title: Text("Assessment Reminders", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: Text("Receive countdown reminders for assessments. You can choose your preferred reminder intervals (e.g. 1 hr, 1 day, 1 week before) anytime in Settings.", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+                      secondary: Icon(Icons.assignment_rounded, color: _notificationGranted ? activeTheme.assessmentColor : activeTheme.subtitleTextColor, size: 20),
                       value: _notificationGranted && _assessmentReminders,
                       onChanged: _notificationGranted ? (val) => setState(() => _assessmentReminders = val) : null,
                     ),
@@ -299,11 +302,11 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
             child: ElevatedButton(
               onPressed: _goToThemeStep,
               style: ElevatedButton.styleFrom(
-                backgroundColor: canContinue ? const Color(0xFF6366F1) : const Color(0xFF334155),
+                backgroundColor: activeTheme.primaryColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
-                elevation: canContinue ? 4 : 0,
+                elevation: 4,
               ),
               child: const Text(
                 "Next: Choose Theme",
@@ -451,7 +454,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
   Widget _buildAppPreviewCard(String themeKey, Brightness systemBrightness) {
     final previewTheme = AppThemeConfig.getTheme(themeKey, systemBrightness);
     final isIOSStyle = !kIsWeb && Platform.isIOS;
-    final pillColor = (themeKey == 'dark')
+    final pillColor = (previewTheme.key == 'dark')
         ? previewTheme.lectureColor
         : previewTheme.primaryColor;
 

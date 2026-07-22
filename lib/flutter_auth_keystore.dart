@@ -5,6 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'flutter_timetable_model.dart';
 import 'flutter_timetable_scraper.dart';
+import 'app_theme_config.dart';
+import 'main.dart' show themeNotifier;
 
 bool get isAndroid => !kIsWeb && Platform.isAndroid;
 bool get isIOS => !kIsWeb && Platform.isIOS;
@@ -111,7 +113,9 @@ class PlatformSecurityInfo {
 
 /// Platform-Aware Security Badge Widget
 class PlatformSecurityBadge extends StatelessWidget {
-  const PlatformSecurityBadge({super.key});
+  final AppThemeConfig activeTheme;
+
+  const PlatformSecurityBadge({super.key, required this.activeTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -121,12 +125,10 @@ class PlatformSecurityBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: useIOSStyle
-            ? const Color(0xFF1C1C1E).withValues(alpha: 0.9)
-            : const Color(0xFF1E293B),
+        color: activeTheme.cardBackgroundColor,
         borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
         border: Border.all(
-          color: useIOSStyle ? const Color(0xFF3A3A3C) : const Color(0xFF334155),
+          color: activeTheme.borderColor,
           width: 1,
         ),
       ),
@@ -136,7 +138,7 @@ class PlatformSecurityBadge extends StatelessWidget {
           Icon(
             PlatformSecurityInfo.platformSecurityIcon,
             size: 20,
-            color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+            color: activeTheme.primaryColor,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -149,7 +151,7 @@ class PlatformSecurityBadge extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: useIOSStyle ? CupertinoColors.white : Colors.white,
+                    color: activeTheme.textColor,
                     fontFamily: useIOSStyle ? ".SF Pro Text" : null,
                   ),
                 ),
@@ -158,9 +160,7 @@ class PlatformSecurityBadge extends StatelessWidget {
                   "Zero centralized backend storage. Credentials remain encrypted on your device.",
                   style: TextStyle(
                     fontSize: 11,
-                    color: useIOSStyle
-                        ? const Color(0xFF8E8E93)
-                        : const Color(0xFF94A3B8),
+                    color: activeTheme.subtitleTextColor,
                   ),
                 ),
               ],
@@ -199,9 +199,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   @override
   void initState() {
     super.initState();
+    themeNotifier.addListener(_onThemeChanged);
     _checkSavedCredentials();
     _usernameFocusNode.addListener(_onFocusChange);
     _passwordFocusNode.addListener(_onFocusChange);
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
   }
 
   void _onFocusChange() {
@@ -210,6 +215,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
   @override
   void dispose() {
+    themeNotifier.removeListener(_onThemeChanged);
     _usernameFocusNode.removeListener(_onFocusChange);
     _passwordFocusNode.removeListener(_onFocusChange);
     _usernameFocusNode.dispose();
@@ -251,28 +257,33 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         password: password,
       );
 
-      await _secureStorage.saveStudentCredentials(
-        username: username,
-        password: password,
-        keepLoggedIn: _keepLoggedIn,
-      );
+      if (events.isNotEmpty) {
+        await _secureStorage.saveStudentCredentials(
+          username: username,
+          password: password,
+          keepLoggedIn: _keepLoggedIn,
+        );
 
-      if (mounted) {
-        setState(() => _isLoading = false);
-        widget.onLoginSuccess(events, StudentCredentials(username: username, password: password));
+        if (mounted) {
+          widget.onLoginSuccess(events, StudentCredentials(username: username, password: password));
+        }
+      } else {
+        setState(() {
+          _errorMessage = "Failed to retrieve timetable. Please check your credentials.";
+        });
       }
     } catch (e) {
+      setState(() {
+        _errorMessage = "Authentication failed: ${e.toString().replaceAll("Exception: ", "")}";
+      });
+    } finally {
       if (mounted) {
-        final msg = e.toString().replaceAll("Exception: ", "").trim();
-        setState(() {
-          _isLoading = false;
-          _errorMessage = msg.isNotEmpty ? msg : "Login failed: Please check your credentials or network connection.";
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  void _showKeepLoggedInInfoDialog() {
+  void _showKeepLoggedInInfoDialog(AppThemeConfig activeTheme) {
     final engineName = PlatformSecurityInfo.storageEngineName;
     final useIOSStyle = isIOS;
 
@@ -296,19 +307,19 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1E293B),
+          backgroundColor: activeTheme.cardBackgroundColor,
           title: Text(
             "Keep me logged in ($engineName)",
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(color: activeTheme.textColor, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           content: Text(
             "Your device will encrypt and securely store your login details using $engineName. Not recommended for shared or public devices.",
-            style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 13),
+            style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text("Got it", style: TextStyle(color: Color(0xFF6366F1))),
+              child: Text("Got it", style: TextStyle(color: activeTheme.primaryColor)),
             ),
           ],
         ),
@@ -319,9 +330,11 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = isIOS;
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
 
     return Scaffold(
-      backgroundColor: useIOSStyle ? CupertinoColors.black : const Color(0xFF0F172A),
+      backgroundColor: activeTheme.scaffoldBackgroundColor,
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.opaque,
@@ -335,7 +348,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                 Icon(
                   PlatformSecurityInfo.platformSecurityIcon,
                   size: 64,
-                  color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                  color: activeTheme.primaryColor,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -344,12 +357,12 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: useIOSStyle ? CupertinoColors.white : Colors.white,
+                    color: activeTheme.textColor,
                     fontFamily: useIOSStyle ? ".SF Pro Display" : null,
                   ),
                 ),
                 const SizedBox(height: 16),
-                const PlatformSecurityBadge(),
+                PlatformSecurityBadge(activeTheme: activeTheme),
                 const SizedBox(height: 32),
                 _buildPlatformTextField(
                   controller: _usernameController,
@@ -358,6 +371,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   label: "University Username",
                   icon: useIOSStyle ? CupertinoIcons.person_fill : Icons.person_rounded,
                   useIOSStyle: useIOSStyle,
+                  activeTheme: activeTheme,
                 ),
                 const SizedBox(height: 16),
                 _buildPlatformTextField(
@@ -368,6 +382,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   icon: useIOSStyle ? CupertinoIcons.lock_fill : Icons.key_rounded,
                   isObscure: _obscurePassword,
                   useIOSStyle: useIOSStyle,
+                  activeTheme: activeTheme,
                   suffix: GestureDetector(
                     onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                     child: Padding(
@@ -377,8 +392,8 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             ? (useIOSStyle ? CupertinoIcons.eye_fill : Icons.visibility)
                             : (useIOSStyle ? CupertinoIcons.eye_slash_fill : Icons.visibility_off),
                         color: _passwordFocusNode.hasFocus
-                            ? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1))
-                            : (useIOSStyle ? const Color(0xFF8E8E93) : const Color(0xFF94A3B8)),
+                            ? activeTheme.primaryColor
+                            : activeTheme.subtitleTextColor,
                         size: 20,
                       ),
                     ),
@@ -392,7 +407,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             scale: 0.8,
                             child: CupertinoSwitch(
                               value: _keepLoggedIn,
-                              activeTrackColor: const Color(0xFF0A84FF),
+                              activeTrackColor: activeTheme.primaryColor,
                               onChanged: (val) => setState(() => _keepLoggedIn = val),
                             ),
                           )
@@ -401,7 +416,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                             width: 24,
                             child: Checkbox(
                               value: _keepLoggedIn,
-                              activeColor: const Color(0xFF6366F1),
+                              activeColor: activeTheme.primaryColor,
                               onChanged: (val) => setState(() => _keepLoggedIn = val ?? true),
                             ),
                           ),
@@ -409,18 +424,18 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     Text(
                       "Keep me logged in",
                       style: TextStyle(
-                        color: useIOSStyle ? CupertinoColors.white : Colors.white,
+                        color: activeTheme.textColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(width: 6),
                     GestureDetector(
-                      onTap: _showKeepLoggedInInfoDialog,
+                      onTap: () => _showKeepLoggedInInfoDialog(activeTheme),
                       child: Icon(
                         useIOSStyle ? CupertinoIcons.info_circle : Icons.info_outline_rounded,
                         size: 18,
-                        color: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8),
+                        color: activeTheme.secondaryColor,
                       ),
                     ),
                   ],
@@ -446,6 +461,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   isLoading: _isLoading,
                   label: "Log In",
                   useIOSStyle: useIOSStyle,
+                  activeTheme: activeTheme,
                 ),
               ],
             ),
@@ -463,20 +479,21 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     required IconData icon,
     bool isObscure = false,
     required bool useIOSStyle,
+    required AppThemeConfig activeTheme,
     Widget? suffix,
   }) {
     final isFocused = focusNode.hasFocus;
-    final accentColor = useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1);
+    final accentColor = activeTheme.primaryColor;
 
     if (useIOSStyle) {
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: isFocused ? const Color(0xFF2C2C2E) : const Color(0xFF1C1C1E),
+          color: activeTheme.cardBackgroundColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isFocused ? accentColor : const Color(0xFF3A3A3C),
+            color: isFocused ? accentColor : activeTheme.borderColor,
             width: isFocused ? 1.5 : 1.0,
           ),
         ),
@@ -490,14 +507,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             padding: const EdgeInsets.only(left: 14),
             child: Icon(
               icon,
-              color: isFocused ? accentColor : const Color(0xFF8E8E93),
+              color: isFocused ? accentColor : activeTheme.subtitleTextColor,
               size: 20,
             ),
           ),
           suffix: suffix,
           decoration: const BoxDecoration(color: Colors.transparent),
-          style: const TextStyle(color: CupertinoColors.white),
-          placeholderStyle: const TextStyle(color: Color(0xFF8E8E93)),
+          style: TextStyle(color: activeTheme.textColor),
+          placeholderStyle: TextStyle(color: activeTheme.subtitleTextColor),
         ),
       );
     } else {
@@ -505,20 +522,20 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         controller: controller,
         focusNode: focusNode,
         obscureText: isObscure,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: activeTheme.textColor),
         decoration: InputDecoration(
           labelText: label,
           hintText: placeholder,
-          hintStyle: const TextStyle(color: Color(0xFF64748B)),
-          labelStyle: TextStyle(color: isFocused ? accentColor : const Color(0xFF94A3B8)),
-          prefixIcon: Icon(icon, color: isFocused ? accentColor : const Color(0xFF64748B)),
+          hintStyle: TextStyle(color: activeTheme.subtitleTextColor),
+          labelStyle: TextStyle(color: isFocused ? accentColor : activeTheme.subtitleTextColor),
+          prefixIcon: Icon(icon, color: isFocused ? accentColor : activeTheme.subtitleTextColor),
           suffixIcon: suffix,
           filled: true,
-          fillColor: isFocused ? const Color(0xFF1E293B) : const Color(0xFF0F172A),
+          fillColor: activeTheme.cardBackgroundColor,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFF334155)),
+            borderSide: BorderSide(color: activeTheme.borderColor),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -534,21 +551,22 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     required bool isLoading,
     required String label,
     required bool useIOSStyle,
+    required AppThemeConfig activeTheme,
   }) {
     if (useIOSStyle) {
       return CupertinoButton(
-        color: const Color(0xFF0A84FF),
+        color: activeTheme.primaryColor,
         borderRadius: BorderRadius.circular(14),
         padding: const EdgeInsets.symmetric(vertical: 16),
         onPressed: onPressed,
         child: isLoading
-            ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+            ? const CupertinoActivityIndicator(color: Colors.white)
             : Text(
                 label,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: CupertinoColors.white,
+                  color: Colors.white,
                 ),
               ),
       );
@@ -556,7 +574,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       return ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6366F1),
+          backgroundColor: activeTheme.primaryColor,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 2,
