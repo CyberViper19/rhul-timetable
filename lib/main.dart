@@ -291,6 +291,8 @@ class _SyncIconButtonState extends State<_SyncIconButton> with SingleTickerProvi
       onPressed: _isSyncing ? null : _handleSync,
     );
   }
+}
+
 class _TimelineSlot {
   final bool isGap;
   final TimetableEvent? event;
