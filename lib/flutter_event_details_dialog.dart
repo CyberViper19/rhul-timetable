@@ -29,7 +29,7 @@ class EventDetailsModalSheet extends StatelessWidget {
 
     // 1. Founder's Building
     if (loc.contains('founder') || loc.contains('fndr') || loc.contains('fnd') || loc.contains('picture') || loc.contains('crossland') || loc.contains('boiler')) {
-      return const RHULBuildingInfo("Founder's Building", LatLng(51.4254, -0.5636));
+      return const RHULBuildingInfo("Founder's Building", LatLng(51.4254, -0.5638));
     }
     // 2. Emily Wilding Davison Building
     if (loc.contains('davison') || loc.contains('ewd') || loc.contains('library')) {
@@ -37,19 +37,19 @@ class EventDetailsModalSheet extends StatelessWidget {
     }
     // 3. Moore Building
     if (loc.contains('moore') || loc.contains('mr') || loc.startsWith('mr-')) {
-      return const RHULBuildingInfo("Moore Building", LatLng(51.4242, -0.5619));
+      return const RHULBuildingInfo("Moore Building", LatLng(51.4242, -0.5620));
     }
     // 4. International Building
     if (loc.contains('international') || loc.contains('inter') || loc.contains('intl') || loc.contains('ib')) {
       return const RHULBuildingInfo("International Building", LatLng(51.4250, -0.5628));
     }
-    // 5. Bedford Building
+    // 5. Bedford Building (West side of campus)
     if (loc.contains('bedford') || loc.contains('bed')) {
-      return const RHULBuildingInfo("Bedford Building", LatLng(51.4260, -0.5610));
+      return const RHULBuildingInfo("Bedford Building", LatLng(51.4259, -0.5644));
     }
     // 6. Wolfson Building
     if (loc.contains('wolfson') || loc.contains('wolf')) {
-      return const RHULBuildingInfo("Wolfson Building", LatLng(51.4252, -0.5622));
+      return const RHULBuildingInfo("Wolfson Building", LatLng(51.4266, -0.5627));
     }
     // 7. McCrea Building
     if (loc.contains('mccrea') || loc.contains('mc') || loc.contains('mcc')) {
@@ -61,7 +61,7 @@ class EventDetailsModalSheet extends StatelessWidget {
     }
     // 9. Arts Building
     if (loc.contains('arts') || loc.contains('art') || loc.startsWith('a-')) {
-      return const RHULBuildingInfo("Arts Building", LatLng(51.4253, -0.5640));
+      return const RHULBuildingInfo("Arts Building", LatLng(51.4253, -0.5642));
     }
     // 10. Windsor Building
     if (loc.contains('windsor') || loc.contains('win') || loc.contains('aud')) {
@@ -69,15 +69,15 @@ class EventDetailsModalSheet extends StatelessWidget {
     }
     // 11. Bourne Building
     if (loc.contains('bourne') || loc.contains('brn') || loc.contains('blt')) {
-      return const RHULBuildingInfo("Bourne Building", LatLng(51.4265, -0.5615));
+      return const RHULBuildingInfo("Bourne Building", LatLng(51.4264, -0.5633));
     }
     // 12. Munro Fox Building
     if (loc.contains('munro') || loc.contains('fox') || loc.contains('mf')) {
-      return const RHULBuildingInfo("Munro Fox Building", LatLng(51.4266, -0.5618));
+      return const RHULBuildingInfo("Munro Fox Building", LatLng(51.4269, -0.5629));
     }
     // 13. Beatrice Schilling Building
     if (loc.contains('schilling') || loc.contains('beatrice') || loc.contains('shil') || loc.startsWith('sh')) {
-      return const RHULBuildingInfo("Beatrice Schilling Building", LatLng(51.4262, -0.5620));
+      return const RHULBuildingInfo("Beatrice Schilling Building", LatLng(51.4258, -0.5623));
     }
     // 14. Horton Building
     if (loc.contains('horton') || loc.contains('hort')) {
@@ -85,11 +85,11 @@ class EventDetailsModalSheet extends StatelessWidget {
     }
     // 15. Tolansky Building
     if (loc.contains('tolansky') || loc.contains('tol')) {
-      return const RHULBuildingInfo("Tolansky Building", LatLng(51.4264, -0.5612));
+      return const RHULBuildingInfo("Tolansky Building", LatLng(51.4269, -0.5635));
     }
     // 16. Queen's Building
     if (loc.contains('queen') || loc.contains('qns') || loc.contains('qn')) {
-      return const RHULBuildingInfo("Queen's Building", LatLng(51.4268, -0.5608));
+      return const RHULBuildingInfo("Queen's Building", LatLng(51.4268, -0.5615));
     }
     // 17. Wetton's Terrace
     if (loc.contains('wetton') || loc.contains('wet')) {
