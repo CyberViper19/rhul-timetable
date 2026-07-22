@@ -81,13 +81,6 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
   }
 
   Future<void> _checkInitialState() async {
-    if (!kIsWeb) {
-      try {
-        final syncEngine = TimetableBackgroundSyncEngine();
-        await syncEngine.requestPermissions();
-      } catch (_) {}
-    }
-
     final creds = await _secureStorage.getStudentCredentials();
     final cached = _cacheManager.getCachedEvents();
 
