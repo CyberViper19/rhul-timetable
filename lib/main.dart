@@ -7,6 +7,7 @@ import 'flutter_timetable_scraper.dart';
 import 'flutter_auth_keystore.dart';
 
 import 'flutter_background_sync.dart';
+import 'flutter_permissions_screen.dart';
 
 class DevHttpOverrides extends HttpOverrides {
   @override
@@ -68,6 +69,7 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
 
   bool _isCheckingAuth = true;
   bool _isLoggedIn = false;
+  bool _showPermissionsOnboarding = false;
   List<TimetableEvent> _events = [];
   StudentCredentials? _credentials;
 
@@ -89,10 +91,12 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
     final cached = _cacheManager.getCachedEvents();
 
     if (creds != null) {
+      final hasCompletedOnboarding = _cacheManager.hasCompletedPermissionsOnboarding();
       setState(() {
         _credentials = creds;
         _events = cached;
         _isLoggedIn = true;
+        _showPermissionsOnboarding = !hasCompletedOnboarding;
         _isCheckingAuth = false;
       });
 
@@ -124,10 +128,19 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
 
   void _handleLoginSuccess(List<TimetableEvent> events, StudentCredentials creds) async {
     await _cacheManager.cacheEvents(events);
+    final hasCompletedOnboarding = _cacheManager.hasCompletedPermissionsOnboarding();
     setState(() {
       _events = events;
       _credentials = creds;
       _isLoggedIn = true;
+      _showPermissionsOnboarding = !hasCompletedOnboarding;
+    });
+  }
+
+  Future<void> _completePermissionsOnboarding() async {
+    await _cacheManager.setCompletedPermissionsOnboarding(true);
+    setState(() {
+      _showPermissionsOnboarding = false;
     });
   }
 
@@ -205,6 +218,10 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
 
     if (!_isLoggedIn) {
       return StudentLoginScreen(onLoginSuccess: _handleLoginSuccess);
+    }
+
+    if (_showPermissionsOnboarding) {
+      return OnboardingPermissionsScreen(onCompleted: _completePermissionsOnboarding);
     }
 
     return TimetableDashboardScreen(

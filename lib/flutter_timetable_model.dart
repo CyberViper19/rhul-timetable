@@ -142,6 +142,16 @@ class TimetableCacheManager {
     };
   }
 
+  Future<void> setCompletedPermissionsOnboarding(bool completed) async {
+    final box = Hive.box<String>(_boxName);
+    await box.put('has_completed_permissions_onboarding', completed.toString());
+  }
+
+  bool hasCompletedPermissionsOnboarding() {
+    final box = Hive.box<String>(_boxName);
+    return box.get('has_completed_permissions_onboarding') == 'true';
+  }
+
   Future<void> clearCache() async {
     final box = Hive.box<String>(_boxName);
     await box.clear();
