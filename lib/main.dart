@@ -927,7 +927,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                           date.day == DateTime.now().day;
                       final hasEvents = _hasEventsOnDate(date);
 
-                      final selectedPillColor = (activeTheme.key == 'dark' || activeTheme.key == 'rhul')
+                      final selectedPillColor = (activeTheme.key == 'dark')
                           ? activeTheme.lectureColor
                           : activeTheme.primaryColor;
 
