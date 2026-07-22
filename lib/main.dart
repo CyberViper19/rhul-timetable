@@ -228,6 +228,71 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
   }
 }
 
+/// Interactive Rotating Sync Icon Button
+class _SyncIconButton extends StatefulWidget {
+  final Future<void> Function() onRefresh;
+  final Color? color;
+
+  const _SyncIconButton({required this.onRefresh, this.color});
+
+  @override
+  State<_SyncIconButton> createState() => _SyncIconButtonState();
+}
+
+class _SyncIconButtonState extends State<_SyncIconButton> with SingleTickerProviderStateMixin {
+  bool _isSyncing = false;
+  late AnimationController _animController;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSync() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+    _animController.repeat();
+    try {
+      await widget.onRefresh();
+    } finally {
+      if (mounted) {
+        _animController.stop();
+        _animController.reset();
+        setState(() => _isSyncing = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final useIOSStyle = !kIsWeb && Platform.isIOS;
+    final buttonColor = widget.color ?? (useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF818CF8));
+
+    return IconButton(
+      icon: RotationTransition(
+        turns: _animController,
+        child: Icon(
+          useIOSStyle ? CupertinoIcons.arrow_clockwise : Icons.refresh_rounded,
+          size: 22,
+        ),
+      ),
+      color: buttonColor,
+      tooltip: _isSyncing ? "Syncing..." : "Sync Now",
+      onPressed: _isSyncing ? null : _handleSync,
+    );
+  }
+}
+
 /// Dashboard Screen featuring Timetable Schedule with Interactive Calendar Navigation
 class TimetableDashboardScreen extends StatefulWidget {
   final List<TimetableEvent> events;
@@ -521,6 +586,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
           ],
         ),
         actions: [
+          _SyncIconButton(onRefresh: widget.onRefresh),
           IconButton(
             icon: Icon(
               useIOSStyle ? CupertinoIcons.today : Icons.today_rounded,
@@ -530,7 +596,7 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             tooltip: "Jump to Today",
             onPressed: _jumpToToday,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
         ],
       ),
 
@@ -584,7 +650,10 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (ctx) => MyAssessmentsScreen(events: widget.events),
+                    builder: (ctx) => MyAssessmentsScreen(
+                      events: widget.events,
+                      onRefresh: widget.onRefresh,
+                    ),
                   ),
                 );
               },
@@ -989,8 +1058,9 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
 /// Screen listing all university assessments in chronological order
 class MyAssessmentsScreen extends StatelessWidget {
   final List<TimetableEvent> events;
+  final Future<void> Function()? onRefresh;
 
-  const MyAssessmentsScreen({super.key, required this.events});
+  const MyAssessmentsScreen({super.key, required this.events, this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -1013,6 +1083,11 @@ class MyAssessmentsScreen extends StatelessWidget {
           "My Assessments",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
+        actions: [
+          if (onRefresh != null)
+            _SyncIconButton(onRefresh: onRefresh!),
+          const SizedBox(width: 4),
+        ],
       ),
       body: assessments.isEmpty
           ? Center(
