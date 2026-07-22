@@ -1902,9 +1902,8 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
               children: [
                 _buildThemeTile(
                   title: "RHUL Theme (Default)",
-                  subtitle: "Royal Holloway Orange & Dark Theme",
+                  subtitle: "Royal Holloway Orange & Pitch Black",
                   themeKey: "rhul",
-                  accentColor: const Color(0xFFF97316),
                   activeTheme: activeTheme,
                 ),
                 Divider(height: 1, color: activeTheme.borderColor),
@@ -1912,7 +1911,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   title: "Colourful",
                   subtitle: "Multi-accent Slate & Indigo Theme",
                   themeKey: "colourful",
-                  accentColor: const Color(0xFF6366F1),
                   activeTheme: activeTheme,
                 ),
                 Divider(height: 1, color: activeTheme.borderColor),
@@ -1920,15 +1918,13 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   title: "System Default",
                   subtitle: "Automatically matches your device light/dark mode",
                   themeKey: "system",
-                  accentColor: const Color(0xFF3B82F6),
                   activeTheme: activeTheme,
                 ),
                 Divider(height: 1, color: activeTheme.borderColor),
                 _buildThemeTile(
                   title: "Dark Mode",
-                  subtitle: "Sleek classic dark theme",
+                  subtitle: "Monochrome Black & White Theme (Blue on dates & lectures)",
                   themeKey: "dark",
-                  accentColor: const Color(0xFF3B82F6),
                   activeTheme: activeTheme,
                 ),
                 Divider(height: 1, color: activeTheme.borderColor),
@@ -1936,7 +1932,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   title: "Light Mode",
                   subtitle: "Clean crisp light theme",
                   themeKey: "light",
-                  accentColor: const Color(0xFFE55B13),
                   activeTheme: activeTheme,
                 ),
                 if (!kIsWeb && Platform.isIOS) ...[
@@ -1945,7 +1940,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                     title: "iOS Default",
                     subtitle: "Classic Apple Cupertino dark style",
                     themeKey: "ios_default",
-                    accentColor: const Color(0xFF0A84FF),
                     activeTheme: activeTheme,
                   ),
                 ],
@@ -2180,7 +2174,6 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     required String title,
     required String subtitle,
     required String themeKey,
-    required Color accentColor,
     required AppThemeConfig activeTheme,
   }) {
     final isSelected = themeNotifier.value == themeKey;
@@ -2191,17 +2184,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
         themeNotifier.value = themeKey;
         setState(() {});
       },
-      leading: Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          color: accentColor,
-          shape: BoxShape.circle,
-        ),
-        child: isSelected
-            ? const Icon(Icons.check, size: 16, color: Colors.white)
-            : null,
-      ),
+      leading: _buildThemePreviewBadge(themeKey, isSelected),
       title: Text(
         title,
         style: TextStyle(
@@ -2220,5 +2203,77 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
           ? Icon(Icons.check_circle_rounded, color: activeTheme.primaryColor)
           : null,
     );
+  }
+
+  Widget _buildThemePreviewBadge(String themeKey, bool isSelected) {
+    switch (themeKey) {
+      case 'rhul':
+        return Container(
+          width: 26,
+          height: 26,
+          decoration: const BoxDecoration(
+            color: Color(0xFFF97316),
+            shape: BoxShape.circle,
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+        );
+      case 'colourful':
+        return Container(
+          width: 26,
+          height: 26,
+          decoration: const BoxDecoration(
+            color: Color(0xFF6366F1),
+            shape: BoxShape.circle,
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+        );
+      case 'system':
+        return Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF64748B), width: 1.5),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFFF8FAFC)],
+              stops: [0.5, 0.5],
+            ),
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 16, color: Color(0xFF6366F1)) : null,
+        );
+      case 'dark':
+        return Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF52525B), width: 1.5),
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+        );
+      case 'light':
+        return Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 16, color: Color(0xFF0F172A)) : null,
+        );
+      case 'ios_default':
+      default:
+        return Container(
+          width: 26,
+          height: 26,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0A84FF),
+            shape: BoxShape.circle,
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 16, color: Colors.white) : null,
+        );
+    }
   }
 }
