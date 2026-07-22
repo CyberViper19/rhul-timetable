@@ -263,7 +263,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                         SwitchListTile(
                           activeColor: const Color(0xFF6366F1),
                           title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: const Text("Receive countdown reminders for assessments", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                          subtitle: const Text("Receive countdown reminders for assessments. You can adjust the notification intervals anytime in Settings.", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
                           secondary: Icon(Icons.assignment_rounded, color: _notificationGranted ? const Color(0xFFF59E0B) : const Color(0xFF64748B), size: 20),
                           value: _notificationGranted && _assessmentReminders,
                           onChanged: _notificationGranted ? (val) => setState(() => _assessmentReminders = val) : null,

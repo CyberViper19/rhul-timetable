@@ -1386,6 +1386,30 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
     }
   }
 
+  void _ensureIntervalsExist(List<int> hoursList) {
+    for (final h in hoursList) {
+      if (!_availableIntervals.any((item) => item['hours'] == h)) {
+        _availableIntervals.add({
+          'label': _formatIntervalLabel(h),
+          'hours': h,
+        });
+      }
+    }
+    _availableIntervals.sort((a, b) => (a['hours'] as int).compareTo(b['hours'] as int));
+  }
+
+  String _formatIntervalLabel(int hours) {
+    if (hours % 168 == 0) {
+      final w = hours ~/ 168;
+      return "$w week${w > 1 ? 's' : ''} before";
+    } else if (hours % 24 == 0) {
+      final d = hours ~/ 24;
+      return "$d day${d > 1 ? 's' : ''} before";
+    } else {
+      return "$hours hour${hours > 1 ? 's' : ''} before";
+    }
+  }
+
   void _loadSettings() {
     final settings = _cacheManager.getNotificationSettings();
     setState(() {
@@ -1394,6 +1418,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
       _reschedules = settings['reschedules'] as bool;
       _assessmentReminders = settings['assessmentReminders'] as bool;
       _reminderHours = (settings['reminderHours'] as List).cast<int>();
+      _ensureIntervalsExist(_reminderHours);
     });
   }
 
@@ -1417,15 +1442,108 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
   void _toggleInterval(int hours) {
     setState(() {
       if (_reminderHours.contains(hours)) {
-        if (_reminderHours.length > 1) {
-          _reminderHours.remove(hours);
+        _reminderHours.remove(hours);
+        if (_reminderHours.isEmpty) {
+          _assessmentReminders = false;
         }
       } else {
         _reminderHours.add(hours);
         _reminderHours.sort();
+        _assessmentReminders = true;
       }
     });
     _saveSettings();
+  }
+
+  void _showAddCustomIntervalDialog() {
+    final useIOSStyle = !kIsWeb && Platform.isIOS;
+    final controller = TextEditingController();
+    int selectedUnitHours = 1;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return AlertDialog(
+              backgroundColor: useIOSStyle ? const Color(0xFF1C1C1E) : const Color(0xFF1E293B),
+              title: const Text("Add Custom Reminder", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Remind me before assessment:", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 13)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            hintText: "e.g. 4",
+                            hintStyle: const TextStyle(color: Color(0xFF64748B)),
+                            filled: true,
+                            fillColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      DropdownButton<int>(
+                        value: selectedUnitHours,
+                        dropdownColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        items: const [
+                          DropdownMenuItem(value: 1, child: Text("Hours")),
+                          DropdownMenuItem(value: 24, child: Text("Days")),
+                          DropdownMenuItem(value: 168, child: Text("Weeks")),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => selectedUnitHours = val);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel", style: TextStyle(color: Color(0xFF94A3B8))),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: useIOSStyle ? const Color(0xFF0A84FF) : const Color(0xFF6366F1),
+                  ),
+                  onPressed: () {
+                    final valText = controller.text.trim();
+                    final numVal = int.tryParse(valText);
+                    if (numVal != null && numVal > 0) {
+                      final totalHours = numVal * selectedUnitHours;
+                      setState(() {
+                        if (!_reminderHours.contains(totalHours)) {
+                          _reminderHours.add(totalHours);
+                          _reminderHours.sort();
+                        }
+                        _ensureIntervalsExist([totalHours]);
+                        _assessmentReminders = true;
+                      });
+                      _saveSettings();
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("Add", style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -1512,7 +1630,12 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   secondary: Icon(useIOSStyle ? CupertinoIcons.doc_text : Icons.assignment_rounded, color: const Color(0xFFF59E0B)),
                   value: _assessmentReminders,
                   onChanged: (val) {
-                    setState(() => _assessmentReminders = val);
+                    setState(() {
+                      _assessmentReminders = val;
+                      if (val && _reminderHours.isEmpty) {
+                        _reminderHours = [1, 24];
+                      }
+                    });
                     _saveSettings();
                   },
                 ),
@@ -1544,25 +1667,38 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
-                                children: _availableIntervals.map((item) {
-                                  final label = item['label'] as String;
-                                  final hours = item['hours'] as int;
-                                  final isSelected = _reminderHours.contains(hours);
+                                children: [
+                                  ..._availableIntervals.map((item) {
+                                    final label = item['label'] as String;
+                                    final hours = item['hours'] as int;
+                                    final isSelected = _reminderHours.contains(hours);
 
-                                  return FilterChip(
-                                    selected: isSelected,
-                                    label: Text(label),
-                                    labelStyle: TextStyle(
-                                      color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    return FilterChip(
+                                      selected: isSelected,
+                                      label: Text(label),
+                                      labelStyle: TextStyle(
+                                        color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        fontSize: 12,
+                                      ),
+                                      selectedColor: primaryColor,
+                                      backgroundColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
+                                      checkmarkColor: Colors.white,
+                                      onSelected: (_) => _toggleInterval(hours),
+                                    );
+                                  }),
+                                  ActionChip(
+                                    avatar: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                                    label: const Text("+ Custom"),
+                                    labelStyle: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
-                                    selectedColor: primaryColor,
-                                    backgroundColor: useIOSStyle ? const Color(0xFF2C2C2E) : const Color(0xFF0F172A),
-                                    checkmarkColor: Colors.white,
-                                    onSelected: (_) => _toggleInterval(hours),
-                                  );
-                                }).toList(),
+                                    backgroundColor: primaryColor.withValues(alpha: 0.35),
+                                    onPressed: _showAddCustomIntervalDialog,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
