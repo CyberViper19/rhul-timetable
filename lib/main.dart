@@ -369,12 +369,18 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
     super.initState();
     _initializeInitialDate();
     _weekPageController = PageController(initialPage: _pageIndexFromDate(_selectedDate));
+    themeNotifier.addListener(_onThemeChanged);
   }
 
   @override
   void dispose() {
+    themeNotifier.removeListener(_onThemeChanged);
     _weekPageController.dispose();
     super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
   }
 
   void _initializeInitialDate() {
@@ -1265,6 +1271,22 @@ class MyAssessmentsScreen extends StatefulWidget {
 class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
   bool _isCompletedExpanded = false;
 
+  @override
+  void initState() {
+    super.initState();
+    themeNotifier.addListener(_onThemeChanged);
+  }
+
+  @override
+  void dispose() {
+    themeNotifier.removeListener(_onThemeChanged);
+    super.dispose();
+  }
+
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
   bool _isEventCompleted(TimetableEvent item) {
     DateTime? endDateTime;
     final dt = DateTime.tryParse(item.exactDate);
@@ -1284,6 +1306,8 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
   @override
   Widget build(BuildContext context) {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
 
     final allAssessments = widget.events.where((e) {
       final t = e.type.toLowerCase();
@@ -1298,16 +1322,17 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
     final completed = allAssessments.where((e) => _isEventCompleted(e)).toList();
 
     return Scaffold(
+      backgroundColor: activeTheme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: activeTheme.cardBackgroundColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           "My Assessments",
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold, color: activeTheme.textColor),
         ),
         actions: [
           if (widget.onRefresh != null)
-            _SyncIconButton(onRefresh: widget.onRefresh!),
+            _SyncIconButton(onRefresh: widget.onRefresh!, color: activeTheme.secondaryColor),
           const SizedBox(width: 4),
         ],
       ),
@@ -1319,12 +1344,12 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                   Icon(
                     useIOSStyle ? CupertinoIcons.doc_text_search : Icons.assignment_turned_in_rounded,
                     size: 64,
-                    color: const Color(0xFF64748B),
+                    color: activeTheme.subtitleTextColor,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     "No assessments found.",
-                    style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
+                    style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 16),
                   ),
                 ],
               ),
@@ -1333,23 +1358,23 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 if (upcoming.isEmpty && completed.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
                       "No upcoming assessments.",
-                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                      style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 14),
                     ),
                   ),
 
-                ...upcoming.map((item) => _buildAssessmentCard(item, isCompleted: false, useIOSStyle: useIOSStyle)),
+                ...upcoming.map((item) => _buildAssessmentCard(item, isCompleted: false, useIOSStyle: useIOSStyle, activeTheme: activeTheme)),
 
                 if (completed.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Card(
-                    color: const Color(0xFF1E293B),
+                    color: activeTheme.cardBackgroundColor,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
-                      side: const BorderSide(color: Color(0xFF334155)),
+                      side: BorderSide(color: activeTheme.borderColor),
                     ),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(12),
@@ -1371,8 +1396,8 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                             Expanded(
                               child: Text(
                                 "Completed Assessments (${completed.length})",
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: activeTheme.textColor,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
@@ -1382,7 +1407,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                               _isCompletedExpanded
                                   ? (useIOSStyle ? CupertinoIcons.chevron_up : Icons.keyboard_arrow_up_rounded)
                                   : (useIOSStyle ? CupertinoIcons.chevron_down : Icons.keyboard_arrow_down_rounded),
-                              color: const Color(0xFF94A3B8),
+                              color: activeTheme.subtitleTextColor,
                             ),
                           ],
                         ),
@@ -1397,7 +1422,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                             padding: const EdgeInsets.only(top: 12),
                             child: Column(
                               children: completed
-                                  .map((item) => _buildAssessmentCard(item, isCompleted: true, useIOSStyle: useIOSStyle))
+                                  .map((item) => _buildAssessmentCard(item, isCompleted: true, useIOSStyle: useIOSStyle, activeTheme: activeTheme))
                                   .toList(),
                             ),
                           )
@@ -1409,18 +1434,18 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
     );
   }
 
-  Widget _buildAssessmentCard(TimetableEvent item, {required bool isCompleted, required bool useIOSStyle}) {
+  Widget _buildAssessmentCard(TimetableEvent item, {required bool isCompleted, required bool useIOSStyle, required AppThemeConfig activeTheme}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       color: isCompleted
-          ? const Color(0xFF151E2E)
-          : const Color(0xFF1E293B),
+          ? activeTheme.containerBackgroundColor
+          : activeTheme.cardBackgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
         side: BorderSide(
           color: isCompleted
-              ? const Color(0xFF334155).withValues(alpha: 0.5)
-              : const Color(0xFFF59E0B).withValues(alpha: 0.5),
+              ? activeTheme.borderColor.withValues(alpha: 0.5)
+              : activeTheme.assessmentColor.withValues(alpha: 0.5),
           width: isCompleted ? 1 : 1.5,
         ),
       ),
@@ -1438,9 +1463,9 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
+                      color: isCompleted ? activeTheme.subtitleTextColor : activeTheme.textColor,
                       decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
-                      decorationColor: const Color(0xFF94A3B8),
+                      decorationColor: activeTheme.subtitleTextColor,
                     ),
                   ),
                 ),
@@ -1473,14 +1498,14 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                      color: activeTheme.assessmentColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       item.type,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFFF59E0B),
+                        color: activeTheme.assessmentColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1493,13 +1518,13 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                 Icon(
                   useIOSStyle ? CupertinoIcons.calendar : Icons.calendar_today_rounded,
                   size: 14,
-                  color: isCompleted ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                  color: activeTheme.subtitleTextColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   "${item.day}, ${item.formattedDate}",
                   style: TextStyle(
-                    color: isCompleted ? const Color(0xFF94A3B8) : Colors.white,
+                    color: isCompleted ? activeTheme.subtitleTextColor : activeTheme.textColor,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
@@ -1510,7 +1535,7 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withValues(alpha: isCompleted ? 0.1 : 0.2),
+                      color: activeTheme.primaryColor.withValues(alpha: isCompleted ? 0.1 : 0.2),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -1518,8 +1543,8 @@ class _MyAssessmentsScreenState extends State<MyAssessmentsScreen> {
                       style: TextStyle(
                         fontSize: 10,
                         color: isCompleted
-                            ? const Color(0xFF64748B)
-                            : const Color(0xFFA5B4FC),
+                            ? activeTheme.subtitleTextColor
+                            : activeTheme.secondaryColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
