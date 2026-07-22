@@ -67,7 +67,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
-            crossAxisAlignment: CrossAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Align(
                 alignment: Alignment.topRight,
@@ -186,7 +186,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
