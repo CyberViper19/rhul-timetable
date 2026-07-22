@@ -733,14 +733,15 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
     required bool isGranted,
     required VoidCallback onPressed,
     required String buttonText,
+    required AppThemeConfig activeTheme,
   }) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: activeTheme.cardBackgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isGranted ? const Color(0xFF10B981).withValues(alpha: 0.5) : const Color(0xFF334155),
+          color: isGranted ? const Color(0xFF10B981).withValues(alpha: 0.5) : activeTheme.borderColor,
           width: 1.5,
         ),
       ),
@@ -749,13 +750,13 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
         children: [
           Row(
             children: [
-              Icon(icon, color: isGranted ? const Color(0xFF10B981) : const Color(0xFF6366F1), size: 24),
+              Icon(icon, color: isGranted ? const Color(0xFF10B981) : activeTheme.primaryColor, size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: activeTheme.textColor,
                     fontSize: 17,
                     fontWeight: FontWeight.w600,
                   ),
@@ -788,8 +789,8 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
           const SizedBox(height: 8),
           Text(
             description,
-            style: const TextStyle(
-              color: Color(0xFF94A3B8),
+            style: TextStyle(
+              color: activeTheme.subtitleTextColor,
               fontSize: 13,
             ),
           ),
@@ -801,15 +802,15 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
               child: OutlinedButton(
                 onPressed: onPressed,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF6366F1)),
+                  side: BorderSide(color: activeTheme.primaryColor),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: Text(
                   buttonText,
-                  style: const TextStyle(
-                    color: Color(0xFF6366F1),
+                  style: TextStyle(
+                    color: activeTheme.primaryColor,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
