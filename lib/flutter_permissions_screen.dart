@@ -1,7 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'flutter_timetable_model.dart';
+import 'app_theme_config.dart';
+import 'main.dart' show themeNotifier;
 
 class OnboardingPermissionsScreen extends StatefulWidget {
   final VoidCallback onCompleted;
@@ -13,6 +16,8 @@ class OnboardingPermissionsScreen extends StatefulWidget {
 }
 
 class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScreen> with WidgetsBindingObserver {
+  int _currentStep = 0; // 0: Permissions & Alerts, 1: Theme Selection & Live Preview
+
   bool _notificationGranted = false;
   bool _batteryGranted = false;
   bool _isChecking = true;
@@ -39,6 +44,12 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
       _roomChanges = settings['roomChanges'] as bool;
       _reschedules = settings['reschedules'] as bool;
       _assessmentReminders = settings['assessmentReminders'] as bool;
+    });
+  }
+
+  void _goToThemeStep() {
+    setState(() {
+      _currentStep = 1;
     });
   }
 
@@ -134,209 +145,582 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
 
   @override
   Widget build(BuildContext context) {
-    final canContinue = _allPermissionsGranted;
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final selectedThemeKey = themeNotifier.value;
+    final activeTheme = AppThemeConfig.getTheme(selectedThemeKey, systemBrightness);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: activeTheme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: TextButton(
-                  onPressed: _saveAndComplete,
-                  child: const Text(
-                    "Skip",
-                    style: TextStyle(
-                      color: Color(0xFF94A3B8),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Center(
-                child: Icon(
-                  Icons.notifications_active_rounded,
-                  size: 64,
-                  color: Color(0xFF6366F1),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                "Stay Updated in Real-Time",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                "Grant background permissions to receive instant alerts when lectures are cancelled, rooms are changed, or assessments are approaching.",
+        child: _currentStep == 0
+            ? _buildPermissionsStep(context)
+            : _buildThemeSelectionStep(context, selectedThemeKey, systemBrightness, activeTheme),
+      ),
+    );
+  }
+
+  Widget _buildPermissionsStep(BuildContext context) {
+    final canContinue = _allPermissionsGranted;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Align(
+            alignment: Alignment.topRight,
+            child: TextButton(
+              onPressed: _goToThemeStep,
+              child: const Text(
+                "Skip",
                 style: TextStyle(
                   color: Color(0xFF94A3B8),
-                  fontSize: 15,
-                  height: 1.4,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 24),
-              if (_isChecking)
-                const Center(child: CircularProgressIndicator())
-              else ...[
-                // Notification Permission Card
-                _buildPermissionCard(
-                  title: "Push Notifications",
-                  description: "Receive alerts for timetable changes and assessment reminders.",
-                  icon: Icons.notifications_none_rounded,
-                  isGranted: _notificationGranted,
-                  onPressed: _requestNotification,
-                  buttonText: "Allow Notifications",
-                ),
-                const SizedBox(height: 16),
-                // Battery Optimization Card (Android only)
-                if (Platform.isAndroid) ...[
-                  _buildPermissionCard(
-                    title: "Unrestricted Battery Saver",
-                    description: "Allows background sync to check for timetable updates reliably in the background.",
-                    icon: Icons.battery_saver_rounded,
-                    isGranted: _batteryGranted,
-                    onPressed: _requestBatteryOptimization,
-                    buttonText: "Disable Battery Saver",
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Notification Preferences Selection Section
-                const Text(
-                  "NOTIFICATION ALERTS TO ENABLE",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.1,
-                    color: Color(0xFF94A3B8),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Opacity(
-                  opacity: _notificationGranted ? 1.0 : 0.6,
-                  child: Card(
-                    color: const Color(0xFF1E293B),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(color: Color(0xFF334155)),
-                    ),
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          activeColor: const Color(0xFF6366F1),
-                          title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: const Text("Notify if a lecture is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                          secondary: Icon(Icons.notifications_active_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
-                          value: _notificationGranted && _cancellations,
-                          onChanged: _notificationGranted ? (val) => setState(() => _cancellations = val) : null,
-                        ),
-                        const Divider(height: 1, color: Color(0xFF334155)),
-                        SwitchListTile(
-                          activeColor: const Color(0xFF6366F1),
-                          title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: const Text("Notify when a class moves rooms", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                          secondary: Icon(Icons.location_on_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
-                          value: _notificationGranted && _roomChanges,
-                          onChanged: _notificationGranted ? (val) => setState(() => _roomChanges = val) : null,
-                        ),
-                        const Divider(height: 1, color: Color(0xFF334155)),
-                        SwitchListTile(
-                          activeColor: const Color(0xFF6366F1),
-                          title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: const Text("Notify when class times change", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                          secondary: Icon(Icons.access_time_filled_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
-                          value: _notificationGranted && _reschedules,
-                          onChanged: _notificationGranted ? (val) => setState(() => _reschedules = val) : null,
-                        ),
-                        const Divider(height: 1, color: Color(0xFF334155)),
-                        SwitchListTile(
-                          activeColor: const Color(0xFF6366F1),
-                          title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
-                          subtitle: const Text("Receive countdown reminders for assessments. You can adjust the notification intervals anytime in Settings.", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
-                          secondary: Icon(Icons.assignment_rounded, color: _notificationGranted ? const Color(0xFFF59E0B) : const Color(0xFF64748B), size: 20),
-                          value: _notificationGranted && _assessmentReminders,
-                          onChanged: _notificationGranted ? (val) => setState(() => _assessmentReminders = val) : null,
-                        ),
-                        if (!_notificationGranted)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF1E1B4B),
-                              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.lock_rounded, color: Color(0xFFF59E0B), size: 14),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Allow 'Push Notifications' above to enable these alert preferences.",
-                                    style: TextStyle(color: Color(0xFFA5B4FC), fontSize: 11, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF0F172A),
-                              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
-                            ),
-                            child: const Text(
-                              "ℹ️ You can change or customize all of these choices anytime later in Settings.",
-                              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: canContinue ? _saveAndComplete : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: canContinue ? const Color(0xFF6366F1) : const Color(0xFF334155),
-                    disabledBackgroundColor: const Color(0xFF1E293B),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: canContinue ? 4 : 0,
-                  ),
-                  child: Text(
-                    "Continue to App",
-                    style: TextStyle(
-                      color: canContinue ? Colors.white : const Color(0xFF64748B),
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Center(
+            child: Icon(
+              Icons.notifications_active_rounded,
+              size: 64,
+              color: Color(0xFF6366F1),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Stay Updated in Real-Time",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            "Grant background permissions to receive instant alerts when lectures are cancelled, rooms are changed, or assessments are approaching.",
+            style: TextStyle(
+              color: Color(0xFF94A3B8),
+              fontSize: 15,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 24),
+          if (_isChecking)
+            const Center(child: CircularProgressIndicator())
+          else ...[
+            _buildPermissionCard(
+              title: "Push Notifications",
+              description: "Receive alerts for timetable changes and assessment reminders.",
+              icon: Icons.notifications_none_rounded,
+              isGranted: _notificationGranted,
+              onPressed: _requestNotification,
+              buttonText: "Allow Notifications",
+            ),
+            const SizedBox(height: 16),
+            if (Platform.isAndroid) ...[
+              _buildPermissionCard(
+                title: "Unrestricted Battery Saver",
+                description: "Allows background sync to check for timetable updates reliably in the background.",
+                icon: Icons.battery_saver_rounded,
+                isGranted: _batteryGranted,
+                onPressed: _requestBatteryOptimization,
+                buttonText: "Disable Battery Saver",
               ),
               const SizedBox(height: 24),
             ],
+            const Text(
+              "NOTIFICATION ALERTS TO ENABLE",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Opacity(
+              opacity: _notificationGranted ? 1.0 : 0.6,
+              child: Card(
+                color: const Color(0xFF1E293B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: const BorderSide(color: Color(0xFF334155)),
+                ),
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      activeColor: const Color(0xFF6366F1),
+                      title: const Text("Cancellation Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: const Text("Notify if a lecture is cancelled", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      secondary: Icon(Icons.notifications_active_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                      value: _notificationGranted && _cancellations,
+                      onChanged: _notificationGranted ? (val) => setState(() => _cancellations = val) : null,
+                    ),
+                    const Divider(height: 1, color: Color(0xFF334155)),
+                    SwitchListTile(
+                      activeColor: const Color(0xFF6366F1),
+                      title: const Text("Room Location Changes", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: const Text("Notify when a class moves rooms", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      secondary: Icon(Icons.location_on_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                      value: _notificationGranted && _roomChanges,
+                      onChanged: _notificationGranted ? (val) => setState(() => _roomChanges = val) : null,
+                    ),
+                    const Divider(height: 1, color: Color(0xFF334155)),
+                    SwitchListTile(
+                      activeColor: const Color(0xFF6366F1),
+                      title: const Text("Reschedule Alerts", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: const Text("Notify when class times change", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      secondary: Icon(Icons.access_time_filled_rounded, color: _notificationGranted ? const Color(0xFF6366F1) : const Color(0xFF64748B), size: 20),
+                      value: _notificationGranted && _reschedules,
+                      onChanged: _notificationGranted ? (val) => setState(() => _reschedules = val) : null,
+                    ),
+                    const Divider(height: 1, color: Color(0xFF334155)),
+                    SwitchListTile(
+                      activeColor: const Color(0xFF6366F1),
+                      title: const Text("Assessment Reminders", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                      subtitle: const Text("Receive countdown reminders for assessments.", style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12)),
+                      secondary: Icon(Icons.assignment_rounded, color: _notificationGranted ? const Color(0xFFF59E0B) : const Color(0xFF64748B), size: 20),
+                      value: _notificationGranted && _assessmentReminders,
+                      onChanged: _notificationGranted ? (val) => setState(() => _assessmentReminders = val) : null,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _goToThemeStep,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: canContinue ? const Color(0xFF6366F1) : const Color(0xFF334155),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: canContinue ? 4 : 0,
+              ),
+              child: const Text(
+                "Next: Choose Theme",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeSelectionStep(BuildContext context, String currentThemeKey, Brightness systemBrightness, AppThemeConfig activeTheme) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: () => setState(() => _currentStep = 0),
+                icon: Icon(Icons.arrow_back_rounded, color: activeTheme.textColor),
+              ),
+              TextButton(
+                onPressed: _saveAndComplete,
+                child: Text(
+                  "Done",
+                  style: TextStyle(
+                    color: activeTheme.primaryColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Choose App Theme",
+            style: TextStyle(
+              color: activeTheme.textColor,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Select your preferred look & feel. You can change your theme anytime later in Settings.",
+            style: TextStyle(
+              color: activeTheme.subtitleTextColor,
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Live Interactive App Preview Card
+          Text(
+            "LIVE PREVIEW",
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+              color: activeTheme.subtitleTextColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _buildAppPreviewCard(currentThemeKey, systemBrightness),
+
+          const SizedBox(height: 20),
+          Text(
+            "SELECT THEME",
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+              color: activeTheme.subtitleTextColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Theme Selection Cards
+          Card(
+            color: activeTheme.cardBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: activeTheme.borderColor),
+            ),
+            child: Column(
+              children: [
+                _buildThemeOptionTile("RHUL Theme (Default)", "Royal Holloway Pitch Black & Orange", "rhul", activeTheme),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeOptionTile("Colourful", "Vibrant Indigo & Slate", "colourful", activeTheme),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeOptionTile("System Default", "Automatically match your phone's dark/light mode", "system", activeTheme),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeOptionTile("Dark Mode", "Monochrome Pitch Black & White", "dark", activeTheme),
+                Divider(height: 1, color: activeTheme.borderColor),
+                _buildThemeOptionTile("Light Mode", "Clean White & Slate", "light", activeTheme),
+                if (!kIsWeb && Platform.isIOS) ...[
+                  Divider(height: 1, color: activeTheme.borderColor),
+                  _buildThemeOptionTile("iOS Default", "Original Apple Blue Theme", "ios_default", activeTheme),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _saveAndComplete,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: activeTheme.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 4,
+              ),
+              child: const Text(
+                "Finish Setup & Open App",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppPreviewCard(String themeKey, Brightness systemBrightness) {
+    final previewTheme = AppThemeConfig.getTheme(themeKey, systemBrightness);
+    final isIOSStyle = !kIsWeb && Platform.isIOS;
+    final pillColor = (themeKey == 'dark')
+        ? previewTheme.lectureColor
+        : previewTheme.primaryColor;
+
+    return Card(
+      color: previewTheme.cardBackgroundColor,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: previewTheme.borderColor, width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Preview Header Bar
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: previewTheme.primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.school, size: 16, color: Colors.white),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "RHUL Timetable",
+                      style: TextStyle(
+                        color: previewTheme.textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Icon(
+                      isIOSStyle ? CupertinoIcons.today : Icons.today_rounded,
+                      size: 16,
+                      color: previewTheme.secondaryColor,
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      isIOSStyle ? CupertinoIcons.arrow_clockwise : Icons.refresh_rounded,
+                      size: 16,
+                      color: previewTheme.secondaryColor,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Day Strip Preview
+            Row(
+              children: [
+                Expanded(child: _buildPreviewDayPill("MON", "20", false, previewTheme, pillColor: pillColor)),
+                const SizedBox(width: 6),
+                Expanded(child: _buildPreviewDayPill("TUE", "21", true, previewTheme, pillColor: pillColor)),
+                const SizedBox(width: 6),
+                Expanded(child: _buildPreviewDayPill("WED", "22", false, previewTheme, pillColor: pillColor)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Sample Lecture Card
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: previewTheme.containerBackgroundColor,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: previewTheme.borderColor),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: previewTheme.lectureColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "CS2850 Operating Systems",
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: previewTheme.textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          "10:00 - 12:00 • Windsor Aud",
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: previewTheme.subtitleTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: previewTheme.lectureColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "Lecture",
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: previewTheme.lectureColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _buildPreviewDayPill(String day, String num, bool isSelected, AppThemeConfig previewTheme, {required Color pillColor}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: isSelected ? pillColor : previewTheme.containerBackgroundColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: isSelected ? pillColor : previewTheme.borderColor),
+      ),
+      child: Column(
+        children: [
+          Text(
+            day,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.white : previewTheme.subtitleTextColor,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            num,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.white : previewTheme.textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOptionTile(String title, String subtitle, String themeKey, AppThemeConfig activeTheme) {
+    final isSelected = themeNotifier.value == themeKey;
+
+    return ListTile(
+      onTap: () async {
+        await _cacheManager.setAppTheme(themeKey);
+        themeNotifier.value = themeKey;
+        setState(() {});
+      },
+      leading: _buildThemePreviewBadge(themeKey, isSelected),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: activeTheme.textColor,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          fontSize: 14,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: activeTheme.subtitleTextColor,
+          fontSize: 11,
+        ),
+      ),
+      trailing: isSelected
+          ? Icon(Icons.check_circle_rounded, color: activeTheme.primaryColor)
+          : null,
+    );
+  }
+
+  Widget _buildThemePreviewBadge(String themeKey, bool isSelected) {
+    switch (themeKey) {
+      case 'rhul':
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: const BoxDecoration(
+            color: Color(0xFFF97316),
+            shape: BoxShape.circle,
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+        );
+      case 'colourful':
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: const BoxDecoration(
+            color: Color(0xFF6366F1),
+            shape: BoxShape.circle,
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+        );
+      case 'system':
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF64748B), width: 1.5),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF0F172A), Color(0xFFF8FAFC)],
+              stops: [0.5, 0.5],
+            ),
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 14, color: Color(0xFF6366F1)) : null,
+        );
+      case 'dark':
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: Colors.black,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF52525B), width: 1.5),
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+        );
+      case 'light':
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 14, color: Color(0xFF0F172A)) : null,
+        );
+      case 'ios_default':
+      default:
+        return Container(
+          width: 24,
+          height: 24,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0A84FF),
+            shape: BoxShape.circle,
+          ),
+          child: isSelected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
+        );
+    }
   }
 
   Widget _buildPermissionCard({
