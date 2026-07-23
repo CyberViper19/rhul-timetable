@@ -483,7 +483,7 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                         color: previewTheme.primaryColor,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.school, size: 16, color: Colors.white),
+                      child: Icon(Icons.school, size: 16, color: previewTheme.buttonTextColor),
                     ),
                     const SizedBox(width: 8),
                     Text(
