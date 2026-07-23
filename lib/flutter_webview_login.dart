@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'app_theme_config.dart';
 import 'flutter_timetable_model.dart';
@@ -29,15 +30,30 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
   String? _errorMessage;
 
   final String _targetLoginUrl =
-      "https://webtimetables.royalholloway.ac.uk/SWS/SDB2526SWS/Login.aspx";
+      "https://webtimetables.royalholloway.ac.uk/";
+
+  static const MethodChannel _cookieChannel =
+      MethodChannel('com.example.rhul_timetable/cookies');
 
   @override
   void initState() {
     super.initState();
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setUserAgent(
+          "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: (NavigationRequest request) {
+            final urlLower = request.url.toLowerCase();
+            if (urlLower.contains("default.aspx") ||
+                (urlLower.contains("sws") && !urlLower.contains("login.aspx"))) {
+              // Intercept login redirect immediately so student does NOT enter portal website
+              _interceptAndScrape(request.url);
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
           onPageStarted: (String url) {
             if (mounted) {
               setState(() {
@@ -45,7 +61,11 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
                 _errorMessage = null;
               });
             }
-            _checkUrlForAuthenticatedSession(url);
+            final urlLower = url.toLowerCase();
+            if (urlLower.contains("default.aspx") ||
+                (urlLower.contains("sws") && !urlLower.contains("login.aspx"))) {
+              _interceptAndScrape(url);
+            }
           },
           onPageFinished: (String url) async {
             if (mounted) {
@@ -53,13 +73,17 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
                 _isLoadingPage = false;
               });
             }
-            await _checkUrlForAuthenticatedSession(url);
+            final urlLower = url.toLowerCase();
+            if (urlLower.contains("default.aspx") ||
+                (urlLower.contains("sws") && !urlLower.contains("login.aspx"))) {
+              await _interceptAndScrape(url);
+            }
           },
           onWebResourceError: (WebResourceError error) {
-            if (mounted) {
+            if (error.isForMainFrame == true && mounted) {
               setState(() {
                 _isLoadingPage = false;
-                _errorMessage = "Connection error: ${error.description}";
+                _errorMessage = "Page error: ${error.description}";
               });
             }
           },
@@ -68,71 +92,98 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
       ..loadRequest(Uri.parse(_targetLoginUrl));
   }
 
-  /// Checks if the user has completed login and landed on the authenticated portal
-  Future<void> _checkUrlForAuthenticatedSession(String urlStr) async {
-    final lowerUrl = urlStr.toLowerCase();
+  /// Extracts native HttpOnly cookies and scrapes timetable
+  Future<void> _interceptAndScrape(String currentUrl) async {
+    if (_isScraping) return;
 
-    if (lowerUrl.contains("default.aspx") ||
-        (lowerUrl.contains("sws") && !lowerUrl.contains("login.aspx"))) {
-      if (_isScraping) return;
+    setState(() {
+      _isScraping = true;
+      _statusText = "Login Detected! Extracting Session...";
+    });
 
-      setState(() {
-        _isScraping = true;
-        _statusText = "Login Detected! Authenticating Session...";
-      });
+    try {
+      final Map<String, String> sessionCookies = {};
 
-      try {
-        // Extract session cookies via JavaScript document.cookie
-        final rawCookie = await _controller.runJavaScriptReturningResult('document.cookie');
-        var cookieStr = rawCookie.toString();
-        if (cookieStr.startsWith('"') && cookieStr.endsWith('"')) {
-          cookieStr = jsonDecode(cookieStr) as String;
+      // 1. Attempt native CookieManager extraction (Android/iOS native)
+      if (!kIsWeb && Platform.isAndroid) {
+        try {
+          final String? nativeCookiesStr = await _cookieChannel.invokeMethod<String>(
+            'getCookies',
+            {'url': currentUrl},
+          );
+          if (nativeCookiesStr != null && nativeCookiesStr.isNotEmpty) {
+            for (final pair in nativeCookiesStr.split(';')) {
+              final parts = pair.split('=');
+              if (parts.length >= 2) {
+                final k = parts[0].trim();
+                final v = parts.sublist(1).join('=').trim();
+                if (k.isNotEmpty) {
+                  sessionCookies[k] = v;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          debugPrint("Native cookie extraction error: $e");
         }
+      }
 
-        final Map<String, String> sessionCookies = {};
-        for (final pair in cookieStr.split(';')) {
+      // 2. Fallback / supplementary document.cookie JS extraction
+      try {
+        final rawCookie = await _controller.runJavaScriptReturningResult('document.cookie');
+        var jsCookieStr = rawCookie.toString();
+        if (jsCookieStr.startsWith('"') && jsCookieStr.endsWith('"')) {
+          jsCookieStr = jsonDecode(jsCookieStr) as String;
+        }
+        for (final pair in jsCookieStr.split(';')) {
           final parts = pair.split('=');
           if (parts.length >= 2) {
             final k = parts[0].trim();
             final v = parts.sublist(1).join('=').trim();
-            if (k.isNotEmpty) {
+            if (k.isNotEmpty && !sessionCookies.containsKey(k)) {
               sessionCookies[k] = v;
             }
           }
         }
-
-        setState(() {
-          _statusText = "Fetching Timetable Events...";
-        });
-
-        // Use scraper to fetch schedule using session cookies
-        final scraper = DirectDartTimetableScraper();
-        final events = await scraper.scrapeTimetableWithCookies(
-          cookies: sessionCookies,
-        );
-
-        final dummyCreds = StudentCredentials(
-          username: "RHUL Student",
-          password: "",
-        );
-
-        final storage = SecureCredentialStorage();
-        await storage.saveStudentCredentials(
-          username: "RHUL Student",
-          password: "",
-          keepLoggedIn: true,
-        );
-
-        if (mounted) {
-          widget.onLoginSuccess(events, dummyCreds);
-        }
       } catch (e) {
-        if (mounted) {
-          setState(() {
-            _isScraping = false;
-            _errorMessage = e.toString().replaceAll("Exception: ", "");
-          });
-        }
+        debugPrint("JS cookie extraction error: $e");
+      }
+
+      if (sessionCookies.isEmpty) {
+        throw Exception("Could not retrieve session cookies. Please try logging in again.");
+      }
+
+      setState(() {
+        _statusText = "Fetching Timetable Events...";
+      });
+
+      // Use scraper with extracted session cookies
+      final scraper = DirectDartTimetableScraper();
+      final events = await scraper.scrapeTimetableWithCookies(
+        cookies: sessionCookies,
+      );
+
+      final dummyCreds = StudentCredentials(
+        username: "RHUL Student",
+        password: "",
+      );
+
+      final storage = SecureCredentialStorage();
+      await storage.saveStudentCredentials(
+        username: "RHUL Student",
+        password: "",
+        keepLoggedIn: true,
+      );
+
+      if (mounted) {
+        widget.onLoginSuccess(events, dummyCreds);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isScraping = false;
+          _errorMessage = e.toString().replaceAll("Exception: ", "");
+        });
       }
     }
   }
@@ -187,8 +238,10 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
       ),
       body: Stack(
         children: [
+          // WebView Widget
           WebViewWidget(controller: _controller),
 
+          // Loading bar during page load
           if (_isLoadingPage && !_isScraping)
             Positioned(
               top: 0,
@@ -201,9 +254,12 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
               ),
             ),
 
+          // Full-screen overlay immediately triggered on login to prevent website view
           if (_isScraping)
             Container(
-              color: activeTheme.scaffoldBackgroundColor.withValues(alpha: 0.95),
+              color: activeTheme.scaffoldBackgroundColor,
+              width: double.infinity,
+              height: double.infinity,
               child: Center(
                 child: Padding(
                   padding: const EdgeInsets.all(32.0),
@@ -234,7 +290,7 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Extracting session & building schedule...",
+                        "Setting up your schedule...",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,
@@ -247,6 +303,7 @@ class _LoginWebViewScreenState extends State<LoginWebViewScreen> {
               ),
             ),
 
+          // Error Banner
           if (_errorMessage != null && !_isScraping)
             Positioned(
               bottom: 16,

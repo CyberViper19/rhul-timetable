@@ -367,7 +367,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "Royal Holloway Login",
+                  "Link Your RHUL Timetable",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 24,
@@ -410,111 +410,15 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   ],
                 ),
 
-                const SizedBox(height: 24),
-                // Primary WebView Portal Login Button
+                const SizedBox(height: 32),
+                // Primary Portal Login Button
                 _buildPlatformButton(
                   onPressed: _isLoading ? null : _openPortalWebViewLogin,
                   isLoading: false,
-                  label: "Log In via RHUL Portal (WebView)",
+                  label: "Log In via RHUL Portal",
                   useIOSStyle: useIOSStyle,
                   activeTheme: activeTheme,
                   icon: useIOSStyle ? CupertinoIcons.globe : Icons.language_rounded,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: activeTheme.borderColor)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Text(
-                        "OR MANUAL LOGIN",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: activeTheme.subtitleTextColor,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: activeTheme.borderColor)),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                _buildPlatformTextField(
-                  controller: _usernameController,
-                  focusNode: _usernameFocusNode,
-                  placeholder: "ZPACxxx",
-                  label: "University Username",
-                  icon: useIOSStyle ? CupertinoIcons.person_fill : Icons.person_rounded,
-                  useIOSStyle: useIOSStyle,
-                  activeTheme: activeTheme,
-                ),
-                const SizedBox(height: 16),
-                _buildPlatformTextField(
-                  controller: _passwordController,
-                  focusNode: _passwordFocusNode,
-                  placeholder: "Portal Password",
-                  label: "Portal Password",
-                  icon: useIOSStyle ? CupertinoIcons.lock_fill : Icons.key_rounded,
-                  isObscure: _obscurePassword,
-                  useIOSStyle: useIOSStyle,
-                  activeTheme: activeTheme,
-                  suffix: GestureDetector(
-                    onTap: () => setState(() => _obscurePassword = !_obscurePassword),
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 12.0),
-                      child: Icon(
-                        _obscurePassword 
-                            ? (useIOSStyle ? CupertinoIcons.eye_fill : Icons.visibility)
-                            : (useIOSStyle ? CupertinoIcons.eye_slash_fill : Icons.visibility_off),
-                        color: _passwordFocusNode.hasFocus
-                            ? activeTheme.primaryColor
-                            : activeTheme.subtitleTextColor,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    useIOSStyle
-                        ? Transform.scale(
-                            scale: 0.8,
-                            child: CupertinoSwitch(
-                              value: _keepLoggedIn,
-                              activeTrackColor: activeTheme.primaryColor,
-                              onChanged: (val) => setState(() => _keepLoggedIn = val),
-                            ),
-                          )
-                        : SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: Checkbox(
-                              value: _keepLoggedIn,
-                              activeColor: activeTheme.primaryColor,
-                              onChanged: (val) => setState(() => _keepLoggedIn = val ?? true),
-                            ),
-                          ),
-                    const SizedBox(width: 12),
-                    Text(
-                      "Keep me logged in",
-                      style: TextStyle(
-                        color: activeTheme.textColor,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () => _showKeepLoggedInInfoDialog(activeTheme),
-                      child: Icon(
-                        useIOSStyle ? CupertinoIcons.info_circle : Icons.info_outline_rounded,
-                        size: 18,
-                        color: activeTheme.secondaryColor,
-                      ),
-                    ),
-                  ],
                 ),
                 if (_errorMessage != null) ...[
                   const SizedBox(height: 16),
@@ -531,14 +435,6 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 20),
-                _buildPlatformButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  isLoading: _isLoading,
-                  label: "Manual Log In",
-                  useIOSStyle: useIOSStyle,
-                  activeTheme: activeTheme,
-                ),
               ],
             ),
           ),

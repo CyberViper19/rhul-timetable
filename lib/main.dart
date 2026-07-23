@@ -12,6 +12,7 @@ import 'flutter_permissions_screen.dart';
 import 'flutter_event_details_dialog.dart';
 import 'flutter_feature_tour_dialog.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 final ValueNotifier<String> themeNotifier = ValueNotifier<String>('rhul');
 
@@ -159,6 +160,8 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
 
   Future<void> _handleLogout() async {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -181,21 +184,25 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
           );
         } else {
           return AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: const Text("Logout", style: TextStyle(color: Colors.white)),
-            content: const Text(
+            backgroundColor: activeTheme.cardBackgroundColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Text("Logout", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.bold)),
+            content: Text(
               "Are you sure you want to log out? Your encrypted security vault will be wiped.",
-              style: TextStyle(color: Color(0xFFCBD5E1)),
+              style: TextStyle(color: activeTheme.subtitleTextColor),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text("Cancel", style: TextStyle(color: Color(0xFF94A3B8))),
+                child: Text("Cancel", style: TextStyle(color: activeTheme.subtitleTextColor)),
               ),
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text("Logout", style: TextStyle(color: Colors.white)),
+                child: const Text("Logout", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ],
           );
@@ -204,6 +211,9 @@ class _MainAppWrapperState extends State<MainAppWrapper> {
     );
 
     if (confirm == true) {
+      try {
+        await WebViewCookieManager().clearCookies();
+      } catch (_) {}
       await _secureStorage.wipeCredentials();
       await _cacheManager.clearCache();
 
