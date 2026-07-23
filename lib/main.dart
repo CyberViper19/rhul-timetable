@@ -417,12 +417,28 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
     _updateSelectedDateAndPage(DateTime.now());
   }
 
-  void _previousWeek() {
-    _updateSelectedDateAndPage(_selectedDate.subtract(const Duration(days: 7)));
+  void _previousMonth() {
+    int year = _selectedDate.year;
+    int month = _selectedDate.month - 1;
+    if (month < 1) {
+      month = 12;
+      year--;
+    }
+    final daysInNewMonth = DateUtils.getDaysInMonth(year, month);
+    final targetDay = _selectedDate.day.clamp(1, daysInNewMonth);
+    _updateSelectedDateAndPage(DateTime(year, month, targetDay));
   }
 
-  void _nextWeek() {
-    _updateSelectedDateAndPage(_selectedDate.add(const Duration(days: 7)));
+  void _nextMonth() {
+    int year = _selectedDate.year;
+    int month = _selectedDate.month + 1;
+    if (month > 12) {
+      month = 1;
+      year++;
+    }
+    final daysInNewMonth = DateUtils.getDaysInMonth(year, month);
+    final targetDay = _selectedDate.day.clamp(1, daysInNewMonth);
+    _updateSelectedDateAndPage(DateTime(year, month, targetDay));
   }
 
   /// Opens platform native calendar date picker dialog
@@ -884,8 +900,8 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     size: 22,
                   ),
                   color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
-                  tooltip: "Previous Week",
-                  onPressed: _previousWeek,
+                  tooltip: "Previous Month",
+                  onPressed: _previousMonth,
                 ),
                 Flexible(
                   child: GestureDetector(
@@ -950,8 +966,8 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     size: 22,
                   ),
                   color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
-                  tooltip: "Next Week",
-                  onPressed: _nextWeek,
+                  tooltip: "Next Month",
+                  onPressed: _nextMonth,
                 ),
               ],
             ),
