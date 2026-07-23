@@ -36,6 +36,9 @@ class AppThemeConfig {
     required this.practicalColor,
   });
 
+  /// Returns dark text for light/white primary buttons, and white text for dark primary buttons
+  Color get buttonTextColor => primaryColor.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+
   static AppThemeConfig getTheme(String key, Brightness systemBrightness) {
     switch (key) {
       case 'colourful':

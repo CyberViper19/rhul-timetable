@@ -308,10 +308,10 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                 ),
                 elevation: 4,
               ),
-              child: const Text(
+              child: Text(
                 "Next: Choose Theme",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: activeTheme.buttonTextColor,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -435,10 +435,10 @@ class _OnboardingPermissionsScreenState extends State<OnboardingPermissionsScree
                 ),
                 elevation: 4,
               ),
-              child: const Text(
+              child: Text(
                 "Finish Setup & Open App",
                 style: TextStyle(
-                  color: Colors.white,
+                  color: activeTheme.buttonTextColor,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

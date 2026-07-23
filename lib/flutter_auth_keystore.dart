@@ -553,6 +553,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     required bool useIOSStyle,
     required AppThemeConfig activeTheme,
   }) {
+    final textColor = activeTheme.buttonTextColor;
     if (useIOSStyle) {
       return CupertinoButton(
         color: activeTheme.primaryColor,
@@ -560,13 +561,13 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         padding: const EdgeInsets.symmetric(vertical: 16),
         onPressed: onPressed,
         child: isLoading
-            ? const CupertinoActivityIndicator(color: Colors.white)
+            ? CupertinoActivityIndicator(color: textColor)
             : Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  color: Colors.white,
+                  color: textColor,
                 ),
               ),
       );
@@ -580,14 +581,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           elevation: 2,
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                child: CircularProgressIndicator(color: textColor, strokeWidth: 2),
               )
             : Text(
                 label,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
               ),
       );
     }

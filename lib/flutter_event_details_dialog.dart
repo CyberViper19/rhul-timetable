@@ -404,11 +404,11 @@ class _EventDetailsModalSheetState extends State<EventDetailsModalSheet> {
                 height: 50,
                 child: ElevatedButton.icon(
                   onPressed: () => _launchGoogleMaps(context),
-                  icon: const Icon(Icons.map_rounded, color: Colors.white),
+                  icon: Icon(Icons.map_rounded, color: activeTheme.buttonTextColor),
                   label: Text(
                     _isOnline ? "Online Lecture" : "Open in Google Maps",
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: activeTheme.buttonTextColor,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
