@@ -2255,7 +2255,7 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
             ),
             child: ListTile(
               leading: Icon(
-                useIOSStyle ? CupertinoIcons.compass : Icons.explore_rounded,
+                (!kIsWeb && Platform.isIOS) ? CupertinoIcons.compass : Icons.explore_rounded,
                 color: primaryColor,
               ),
               title: Text("Replay App Feature Guide", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
