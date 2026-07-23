@@ -363,7 +363,38 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 PlatformSecurityBadge(activeTheme: activeTheme),
-                const SizedBox(height: 32),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTrustBadge(
+                        icon: useIOSStyle ? CupertinoIcons.shield_fill : Icons.privacy_tip_rounded,
+                        label: "No Data Collected",
+                        activeTheme: activeTheme,
+                        useIOSStyle: useIOSStyle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTrustBadge(
+                        icon: useIOSStyle ? CupertinoIcons.slash_circle : Icons.block_rounded,
+                        label: "No Ads",
+                        activeTheme: activeTheme,
+                        useIOSStyle: useIOSStyle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildTrustBadge(
+                        icon: useIOSStyle ? CupertinoIcons.gift_fill : Icons.volunteer_activism_rounded,
+                        label: "Completely Free",
+                        activeTheme: activeTheme,
+                        useIOSStyle: useIOSStyle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
                 _buildPlatformTextField(
                   controller: _usernameController,
                   focusNode: _usernameFocusNode,
@@ -467,6 +498,47 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTrustBadge({
+    required IconData icon,
+    required String label,
+    required AppThemeConfig activeTheme,
+    required bool useIOSStyle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      decoration: BoxDecoration(
+        color: activeTheme.cardBackgroundColor,
+        borderRadius: BorderRadius.circular(useIOSStyle ? 12 : 10),
+        border: Border.all(
+          color: activeTheme.borderColor,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: activeTheme.optionalColor,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: activeTheme.textColor,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
