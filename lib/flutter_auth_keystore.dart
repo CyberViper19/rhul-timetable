@@ -509,7 +509,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     required bool useIOSStyle,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 3),
       decoration: BoxDecoration(
         color: activeTheme.cardBackgroundColor,
         borderRadius: BorderRadius.circular(useIOSStyle ? 12 : 10),
@@ -523,19 +523,22 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         children: [
           Icon(
             icon,
-            size: 14,
+            size: 13,
             color: activeTheme.optionalColor,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 3),
           Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.bold,
-                color: activeTheme.textColor,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: activeTheme.textColor,
+                ),
+                maxLines: 1,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
