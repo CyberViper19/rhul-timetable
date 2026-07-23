@@ -428,25 +428,28 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
   /// Opens platform native calendar date picker dialog
   Future<void> _openCalendarDatePicker() async {
     final useIOSStyle = !kIsWeb && Platform.isIOS;
+    final systemBrightness = MediaQuery.platformBrightnessOf(context);
+    final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
+    final pickerPrimary = (activeTheme.key == 'dark') ? activeTheme.lectureColor : activeTheme.primaryColor;
 
     if (useIOSStyle) {
       showCupertinoModalPopup(
         context: context,
         builder: (ctx) => Container(
           height: 300,
-          color: const Color(0xFF1C1C1E),
+          color: activeTheme.cardBackgroundColor,
           child: Column(
             children: [
               Container(
-                color: const Color(0xFF2C2C2E),
+                color: activeTheme.containerBackgroundColor,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("Select Date", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text("Select Date", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.bold)),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      child: const Text("Done"),
+                      child: Text("Done", style: TextStyle(color: pickerPrimary, fontWeight: FontWeight.bold)),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
@@ -474,12 +477,22 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
         firstDate: DateTime(2024, 1, 1),
         lastDate: DateTime(2028, 12, 31),
         builder: (context, child) {
+          final isDark = activeTheme.textColor == Colors.white;
           return Theme(
-            data: ThemeData.dark().copyWith(
-              colorScheme: const ColorScheme.dark(
-                primary: Color(0xFF6366F1),
-                surface: Color(0xFF1E293B),
+            data: (isDark ? ThemeData.dark() : ThemeData.light()).copyWith(
+              colorScheme: ColorScheme(
+                brightness: isDark ? Brightness.dark : Brightness.light,
+                primary: pickerPrimary,
+                onPrimary: activeTheme.buttonTextColor,
+                secondary: pickerPrimary,
+                onSecondary: activeTheme.buttonTextColor,
+                error: Colors.redAccent,
+                onError: Colors.white,
+                surface: activeTheme.cardBackgroundColor,
+                onSurface: activeTheme.textColor,
               ),
+              dialogBackgroundColor: activeTheme.cardBackgroundColor,
+              scaffoldBackgroundColor: activeTheme.scaffoldBackgroundColor,
             ),
             child: child!,
           );
@@ -2114,26 +2127,27 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                                     final label = item['label'] as String;
                                     final hours = item['hours'] as int;
                                     final isSelected = _reminderHours.contains(hours);
+                                    final chipTextColor = activeTheme.buttonTextColor;
 
                                     return FilterChip(
                                       selected: isSelected,
                                       label: Text(label),
                                       labelStyle: TextStyle(
-                                        color: isSelected ? Colors.white : activeTheme.textColor,
+                                        color: isSelected ? chipTextColor : activeTheme.textColor,
                                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                         fontSize: 12,
                                       ),
                                       selectedColor: primaryColor,
                                       backgroundColor: activeTheme.containerBackgroundColor,
-                                      checkmarkColor: Colors.white,
+                                      checkmarkColor: chipTextColor,
                                       onSelected: (_) => _toggleInterval(hours),
                                     );
                                   }),
                                   ActionChip(
-                                    avatar: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                                    avatar: Icon(Icons.add_rounded, size: 16, color: activeTheme.buttonTextColor),
                                     label: const Text("Custom"),
-                                    labelStyle: const TextStyle(
-                                      color: Colors.white,
+                                    labelStyle: TextStyle(
+                                      color: activeTheme.buttonTextColor,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
