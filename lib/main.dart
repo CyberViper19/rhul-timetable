@@ -1058,253 +1058,259 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
               },
             ),
           ),
-
           Divider(height: 1, color: activeTheme.borderColor),
 
           // Events List
           Expanded(
-            child: RefreshIndicator(
-              color: activeTheme.primaryColor,
-              backgroundColor: activeTheme.cardBackgroundColor,
-              onRefresh: widget.onRefresh,
-              child: dayEvents.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.4,
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  useIOSStyle ? CupertinoIcons.moon_stars : Icons.event_available_rounded,
-                                  size: 48,
-                                  color: activeTheme.subtitleTextColor,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  "No classes scheduled for ${_weekdayShort(_selectedDate.weekday)}, ${_selectedDate.day} ${_monthName(_selectedDate.month)}.",
-                                  style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 14),
-                                ),
-                              ],
+            child: GestureDetector(
+              onHorizontalDragEnd: (details) {
+                if (details.primaryVelocity != null) {
+                  if (details.primaryVelocity! < -250) {
+                    // Swiped Left -> Advance to Next Day
+                    setState(() {
+                      _selectedDate = _selectedDate.add(const Duration(days: 1));
+                    });
+                    final targetPage = _pageIndexFromDate(_selectedDate);
+                    if (_weekPageController.hasClients && _weekPageController.page?.round() != targetPage) {
+                      _weekPageController.animateToPage(
+                        targetPage,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  } else if (details.primaryVelocity! > 250) {
+                    // Swiped Right -> Go back to Previous Day
+                    setState(() {
+                      _selectedDate = _selectedDate.subtract(const Duration(days: 1));
+                    });
+                    final targetPage = _pageIndexFromDate(_selectedDate);
+                    if (_weekPageController.hasClients && _weekPageController.page?.round() != targetPage) {
+                      _weekPageController.animateToPage(
+                        targetPage,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  }
+                }
+              },
+              behavior: HitTestBehavior.translucent,
+              child: RefreshIndicator(
+                color: activeTheme.primaryColor,
+                backgroundColor: activeTheme.cardBackgroundColor,
+                onRefresh: widget.onRefresh,
+                child: dayEvents.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    useIOSStyle ? CupertinoIcons.moon_stars : Icons.event_available_rounded,
+                                    size: 48,
+                                    color: activeTheme.subtitleTextColor,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    "No classes scheduled for ${_weekdayShort(_selectedDate.weekday)}, ${_selectedDate.day} ${_monthName(_selectedDate.month)}.",
+                                    style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 14),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  : () {
-                      final slots = _buildTimelineSlots(dayEvents);
+                        ],
+                      )
+                    : () {
+                        final slots = _buildTimelineSlots(dayEvents);
 
-                      return ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        itemCount: slots.length,
-                        itemBuilder: (context, index) {
-                          final slot = slots[index];
+                        return ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          itemCount: slots.length,
+                          itemBuilder: (context, index) {
+                            final slot = slots[index];
 
-                          if (slot.isGap) {
-                            final durationText = _formatGapDuration(slot.gapDurationMinutes);
+                            if (slot.isGap) {
+                              final durationText = _formatGapDuration(slot.gapDurationMinutes);
 
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 20),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Large Time Header for Gap
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        useIOSStyle ? CupertinoIcons.pause_circle_fill : Icons.timer_outlined,
-                                        size: 18,
-                                        color: activeTheme.subtitleTextColor,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "${slot.startTime} – ${slot.finishTime}",
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w800,
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 20),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Large Time Header for Gap
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          useIOSStyle ? CupertinoIcons.pause_circle_fill : Icons.timer_outlined,
+                                          size: 18,
                                           color: activeTheme.subtitleTextColor,
-                                          letterSpacing: -0.5,
                                         ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: activeTheme.borderColor.withValues(alpha: 0.5),
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          durationText,
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "${slot.startTime} – ${slot.finishTime}",
                                           style: TextStyle(
-                                            fontSize: 11,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800,
                                             color: activeTheme.subtitleTextColor,
-                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: -0.5,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  // Gap Card Underneath
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                    decoration: BoxDecoration(
-                                      color: activeTheme.containerBackgroundColor,
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color: activeTheme.borderColor.withValues(alpha: 0.6),
-                                        width: 1.2,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        const Text("☕", style: TextStyle(fontSize: 18)),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          "Free Break ($durationText)",
-                                          style: TextStyle(
-                                            color: activeTheme.subtitleTextColor,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
+                                        const SizedBox(width: 10),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: activeTheme.subtitleTextColor.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            "Free • $durationText",
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: activeTheme.subtitleTextColor,
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          } else {
+                                    const SizedBox(height: 8),
+                                    Divider(height: 1, color: activeTheme.borderColor.withValues(alpha: 0.5)),
+                                  ],
+                                ),
+                              );
+                            }
+
                             final event = slot.event!;
                             final typeColor = _getEventTypeColor(event.type, activeTheme);
 
                             return Padding(
-                              padding: const EdgeInsets.only(bottom: 20),
+                              padding: const EdgeInsets.only(bottom: 16),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Large Time Header for Lecture
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        useIOSStyle ? CupertinoIcons.clock_fill : Icons.access_time_filled_rounded,
-                                        size: 20,
-                                        color: typeColor,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "${event.start} – ${event.finish}",
-                                        style: TextStyle(
-                                          fontSize: 22,
-                                          fontWeight: FontWeight.w900,
-                                          color: activeTheme.textColor,
-                                          letterSpacing: -0.5,
-                                        ),
-                                      ),
-                                    ],
+                                  // Time Header
+                                  Text(
+                                    "${event.start} – ${event.finish}",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: activeTheme.textColor,
+                                      letterSpacing: -0.5,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
-                                  // Lecture Card Underneath
-                                  GestureDetector(
-                                    onTap: () => _showEventDetailsModal(context, event, typeColor),
-                                    child: Card(
-                                      margin: EdgeInsets.zero,
-                                      color: activeTheme.cardBackgroundColor,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(useIOSStyle ? 16 : 12),
-                                        side: BorderSide(
-                                          color: activeTheme.borderColor,
+                                  // Event Card with Tap-to-Expand Modal
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _showEventDetailsModal(context, event, typeColor),
+                                      borderRadius: BorderRadius.circular(16),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: activeTheme.cardBackgroundColor,
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(
+                                            color: activeTheme.borderColor,
+                                            width: 1,
+                                          ),
                                         ),
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: IntrinsicHeight(
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                                          children: [
-                                            Container(
-                                              width: 6,
-                                              color: typeColor,
-                                            ),
-                                            Expanded(
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(16.0),
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(16),
+                                          child: IntrinsicHeight(
+                                            child: Row(
+                                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                                              children: [
+                                                // Category Color Bar Indicator
+                                                Container(
+                                                  width: 5,
+                                                  color: typeColor,
+                                                ),
+                                                Expanded(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.all(14.0),
+                                                    child: Column(
+                                                      crossAxisAlignment: CrossAxisAlignment.start,
                                                       children: [
-                                                        Expanded(
-                                                          child: Text(
-                                                            event.module,
-                                                            style: TextStyle(
-                                                              fontSize: 17,
-                                                              fontWeight: FontWeight.bold,
+                                                        Row(
+                                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            Expanded(
+                                                              child: Text(
+                                                                event.module,
+                                                                style: TextStyle(
+                                                                  fontSize: 15,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: activeTheme.textColor,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                            const SizedBox(width: 8),
+                                                            Container(
+                                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                              decoration: BoxDecoration(
+                                                                color: typeColor.withValues(alpha: 0.15),
+                                                                borderRadius: BorderRadius.circular(8),
+                                                              ),
+                                                              child: Text(
+                                                                event.type,
+                                                                style: TextStyle(
+                                                                  fontSize: 11,
+                                                                  fontWeight: FontWeight.bold,
+                                                                  color: typeColor,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        const SizedBox(height: 8),
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                              useIOSStyle ? CupertinoIcons.location_solid : Icons.location_on_rounded,
+                                                              size: 15,
                                                               color: activeTheme.textColor,
                                                             ),
-                                                          ),
-                                                        ),
-                                                        Container(
-                                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                                          decoration: BoxDecoration(
-                                                            color: typeColor.withValues(alpha: 0.2),
-                                                            borderRadius: BorderRadius.circular(8),
-                                                          ),
-                                                          child: Text(
-                                                            event.type,
-                                                            style: TextStyle(
-                                                              fontSize: 11,
-                                                              color: typeColor,
-                                                              fontWeight: FontWeight.bold,
+                                                            const SizedBox(width: 6),
+                                                            Expanded(
+                                                              child: Text(
+                                                                event.location,
+                                                                style: TextStyle(color: activeTheme.textColor, fontSize: 13, fontWeight: FontWeight.w500),
+                                                                overflow: TextOverflow.ellipsis,
+                                                              ),
                                                             ),
-                                                          ),
+                                                          ],
                                                         ),
-                                                      ],
-                                                    ),
-                                                    const SizedBox(height: 10),
-                                                    Row(
-                                                      children: [
-                                                        Icon(
-                                                          useIOSStyle ? CupertinoIcons.location : Icons.location_on_rounded,
-                                                          size: 15,
-                                                          color: activeTheme.subtitleTextColor,
-                                                        ),
-                                                        const SizedBox(width: 6),
-                                                        Expanded(
-                                                          child: Text(
-                                                            event.location,
-                                                            style: TextStyle(color: activeTheme.textColor, fontSize: 13, fontWeight: FontWeight.w500),
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    if (event.staff.isNotEmpty) ...[
-                                                      const SizedBox(height: 6),
-                                                      Row(
-                                                        children: [
-                                                          Icon(
-                                                            useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
-                                                            size: 15,
-                                                            color: activeTheme.subtitleTextColor,
-                                                          ),
-                                                          const SizedBox(width: 6),
-                                                          Text(
-                                                            event.staff,
-                                                            style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12),
+                                                        if (event.staff.isNotEmpty) ...[
+                                                          const SizedBox(height: 6),
+                                                          Row(
+                                                            children: [
+                                                              Icon(
+                                                                useIOSStyle ? CupertinoIcons.person : Icons.person_outline_rounded,
+                                                                size: 15,
+                                                                color: activeTheme.subtitleTextColor,
+                                                              ),
+                                                              const SizedBox(width: 6),
+                                                              Text(
+                                                                event.staff,
+                                                                style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12),
+                                                              ),
+                                                            ],
                                                           ),
                                                         ],
-                                                      ),
-                                                    ],
-                                                  ],
+                                                      ],
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                              ],
                                             ),
-                                          ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -1313,9 +1319,9 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                               ),
                             );
                           }
-                        },
-                      );
-                    }(),
+                        );
+                      }(),
+              ),
             ),
           ),
         ],
