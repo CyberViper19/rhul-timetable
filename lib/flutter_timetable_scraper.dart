@@ -119,6 +119,84 @@ class DirectDartTimetableScraper {
     };
   }
 
+  /// Scrapes timetable using pre-authenticated session cookies extracted from WebView login
+  Future<List<TimetableEvent>> scrapeTimetableWithCookies({
+    required Map<String, String> cookies,
+    String? username,
+  }) async {
+    _cookies.clear();
+    _cookies.addAll(cookies);
+
+    // ── Step 1: GET default.aspx to confirm active session ─────────────────
+    final defaultPage = await _get(_defaultUrl);
+    if (!defaultPage.body.contains('LinkBtn_studentMyTimetable')) {
+      throw Exception('Session expired or authentication invalid. Please log in again via portal.');
+    }
+    final defaultTokens = _extractTokens(defaultPage.body);
+
+    // ── Step 2: Navigate to My Timetable ──────────────────────────────────
+    final ttNav1 = await _post(_defaultUrl, {
+      '__EVENTTARGET': 'LinkBtn_studentMyTimetable',
+      '__EVENTARGUMENT': '',
+      '__VIEWSTATE': defaultTokens['__VIEWSTATE']!,
+      '__VIEWSTATEGENERATOR': defaultTokens['__VIEWSTATEGENERATOR']!,
+      '__EVENTVALIDATION': defaultTokens['__EVENTVALIDATION']!,
+    });
+
+    final ttDoc1 = parse(ttNav1.body);
+    final userId = (username != null && username.isNotEmpty)
+        ? username
+        : (ttDoc1.querySelector('input[name="tUser"]')?.attributes['value'] ?? '');
+    final ttTokens1 = _extractTokens(ttNav1.body);
+
+    const weeksString =
+        "1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16;17;18;19;20;21;22;23;24;25;26;27;28;29;30;31;32;33;34;35;36;37;38;39;40;41;42;43;44;45;46;47;48;49;50;51;52";
+
+    // ── Step 3: POST TextSpreadsheet report ────────────────────────────────
+    final textPage = await _post(_defaultUrl, {
+      '__VIEWSTATE': ttTokens1['__VIEWSTATE']!,
+      '__VIEWSTATEGENERATOR': ttTokens1['__VIEWSTATEGENERATOR']!,
+      '__EVENTVALIDATION': ttTokens1['__EVENTVALIDATION']!,
+      'tUser': userId,
+      'lbWeeks': weeksString,
+      'lbDays': '1-5',
+      'dlPeriod': '1-28',
+      'RadioType': 'textspreadsheet;swsurl;swscustomts',
+      'bGetTimetable': 'View Timetable',
+    });
+
+    // ── Step 4: POST Individual Grid report ────────────────────────────────
+    final ttNav2 = await _post(_defaultUrl, {
+      '__EVENTTARGET': 'LinkBtn_studentMyTimetable',
+      '__EVENTARGUMENT': '',
+      '__VIEWSTATE': defaultTokens['__VIEWSTATE']!,
+      '__VIEWSTATEGENERATOR': defaultTokens['__VIEWSTATEGENERATOR']!,
+      '__EVENTVALIDATION': defaultTokens['__EVENTVALIDATION']!,
+    });
+    final ttTokens2 = _extractTokens(ttNav2.body);
+
+    final gridPage = await _post(_defaultUrl, {
+      '__VIEWSTATE': ttTokens2['__VIEWSTATE']!,
+      '__VIEWSTATEGENERATOR': ttTokens2['__VIEWSTATEGENERATOR']!,
+      '__EVENTVALIDATION': ttTokens2['__EVENTVALIDATION']!,
+      'tUser': userId,
+      'lbWeeks': weeksString,
+      'lbDays': '1-5',
+      'dlPeriod': '1-28',
+      'RadioType': 'individual;swsurl;swsurl',
+      'bGetTimetable': 'View Timetable',
+    });
+
+    // ── Step 5: Parse & Combine ─────────────────────────────────────────────
+    final events = _parseAndExpandTimetable(textPage.body, gridPage.body);
+
+    if (events.isEmpty) {
+      throw Exception('Authenticated successfully, but no timetable events were found.');
+    }
+
+    return events;
+  }
+
   Future<List<TimetableEvent>> scrapeTimetable({
     required String username,
     required String password,

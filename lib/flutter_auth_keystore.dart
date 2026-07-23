@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'flutter_timetable_model.dart';
 import 'flutter_timetable_scraper.dart';
+import 'flutter_webview_login.dart';
 import 'app_theme_config.dart';
 import 'main.dart' show themeNotifier;
 
@@ -283,6 +284,20 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     }
   }
 
+  void _openPortalWebViewLogin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => LoginWebViewScreen(
+          onLoginSuccess: (events, creds) {
+            Navigator.pop(ctx);
+            widget.onLoginSuccess(events, creds);
+          },
+        ),
+      ),
+    );
+  }
+
   void _showKeepLoggedInInfoDialog(AppThemeConfig activeTheme) {
     final engineName = PlatformSecurityInfo.storageEngineName;
     final useIOSStyle = isIOS;
@@ -394,7 +409,37 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 24),
+                // Primary WebView Portal Login Button
+                _buildPlatformButton(
+                  onPressed: _isLoading ? null : _openPortalWebViewLogin,
+                  isLoading: false,
+                  label: "Log In via RHUL Portal (WebView)",
+                  useIOSStyle: useIOSStyle,
+                  activeTheme: activeTheme,
+                  icon: useIOSStyle ? CupertinoIcons.globe : Icons.language_rounded,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: activeTheme.borderColor)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: Text(
+                        "OR MANUAL LOGIN",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: activeTheme.subtitleTextColor,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: activeTheme.borderColor)),
+                  ],
+                ),
+                const SizedBox(height: 20),
                 _buildPlatformTextField(
                   controller: _usernameController,
                   focusNode: _usernameFocusNode,
@@ -486,11 +531,11 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                     ),
                   ),
                 ],
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
                 _buildPlatformButton(
                   onPressed: _isLoading ? null : _handleLogin,
                   isLoading: _isLoading,
-                  label: "Log In",
+                  label: "Manual Log In",
                   useIOSStyle: useIOSStyle,
                   activeTheme: activeTheme,
                 ),
@@ -627,17 +672,25 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
     required String label,
     required bool useIOSStyle,
     required AppThemeConfig activeTheme,
+    IconData? icon,
   }) {
     final textColor = activeTheme.buttonTextColor;
-    if (useIOSStyle) {
-      return CupertinoButton(
-        color: activeTheme.primaryColor,
-        borderRadius: BorderRadius.circular(14),
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        onPressed: onPressed,
-        child: isLoading
+    final childWidget = isLoading
+        ? (useIOSStyle
             ? CupertinoActivityIndicator(color: textColor)
-            : Text(
+            : SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(color: textColor, strokeWidth: 2),
+              ))
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: textColor, size: 20),
+                const SizedBox(width: 8),
+              ],
+              Text(
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -645,6 +698,16 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                   color: textColor,
                 ),
               ),
+            ],
+          );
+
+    if (useIOSStyle) {
+      return CupertinoButton(
+        color: activeTheme.primaryColor,
+        borderRadius: BorderRadius.circular(14),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        onPressed: onPressed,
+        child: childWidget,
       );
     } else {
       return ElevatedButton(
@@ -655,16 +718,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 2,
         ),
-        child: isLoading
-            ? SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(color: textColor, strokeWidth: 2),
-              )
-            : Text(
-                label,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
-              ),
+        child: childWidget,
       );
     }
   }
