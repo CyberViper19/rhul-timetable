@@ -790,19 +790,6 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
             ),
             ListTile(
               leading: Icon(
-                useIOSStyle ? CupertinoIcons.compass : Icons.explore_rounded,
-                color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
-              ),
-              title: Text("Quick Feature Guide", style: TextStyle(color: activeTheme.textColor)),
-              onTap: () {
-                Navigator.pop(context);
-                final systemBrightness = MediaQuery.platformBrightnessOf(context);
-                final theme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
-                showFeatureTourModal(context, theme);
-              },
-            ),
-            ListTile(
-              leading: Icon(
                 useIOSStyle ? CupertinoIcons.gear : Icons.settings_rounded,
                 color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
               ),
