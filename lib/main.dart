@@ -10,6 +10,7 @@ import 'app_theme_config.dart';
 import 'flutter_background_sync.dart';
 import 'flutter_permissions_screen.dart';
 import 'flutter_event_details_dialog.dart';
+import 'flutter_feature_tour_dialog.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 final ValueNotifier<String> themeNotifier = ValueNotifier<String>('rhul');
@@ -370,6 +371,17 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
     _initializeInitialDate();
     _weekPageController = PageController(initialPage: _pageIndexFromDate(_selectedDate));
     themeNotifier.addListener(_onThemeChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkFirstTimeTour());
+  }
+
+  Future<void> _checkFirstTimeTour() async {
+    final cacheManager = TimetableCacheManager();
+    if (!cacheManager.hasSeenFeatureTour() && mounted) {
+      final systemBrightness = MediaQuery.platformBrightnessOf(context);
+      final activeTheme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
+      await cacheManager.setHasSeenFeatureTour(true);
+      showFeatureTourModal(context, activeTheme);
+    }
   }
 
   @override
@@ -774,6 +786,19 @@ class _TimetableDashboardScreenState extends State<TimetableDashboardScreen> {
                     ),
                   ),
                 );
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                useIOSStyle ? CupertinoIcons.compass : Icons.explore_rounded,
+                color: activeTheme.key == 'dark' ? activeTheme.textColor : activeTheme.primaryColor,
+              ),
+              title: Text("Quick Feature Guide", style: TextStyle(color: activeTheme.textColor)),
+              onTap: () {
+                Navigator.pop(context);
+                final systemBrightness = MediaQuery.platformBrightnessOf(context);
+                final theme = AppThemeConfig.getTheme(themeNotifier.value, systemBrightness);
+                showFeatureTourModal(context, theme);
               },
             ),
             ListTile(
@@ -2204,6 +2229,40 @@ class _SettingsScreenState extends State<SettingsScreen> with WidgetsBindingObse
                   ),
                 ],
               ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Section Header: Help & Guide
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 8),
+            child: Text(
+              "HELP & GUIDE",
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+                color: activeTheme.subtitleTextColor,
+              ),
+            ),
+          ),
+          Card(
+            color: activeTheme.cardBackgroundColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: activeTheme.borderColor,
+              ),
+            ),
+            child: ListTile(
+              leading: Icon(
+                useIOSStyle ? CupertinoIcons.compass : Icons.explore_rounded,
+                color: primaryColor,
+              ),
+              title: Text("Replay App Feature Guide", style: TextStyle(color: activeTheme.textColor, fontWeight: FontWeight.w600)),
+              subtitle: Text("Learn how to swipe days, pull to sync, and check assessments", style: TextStyle(color: activeTheme.subtitleTextColor, fontSize: 12)),
+              onTap: () {
+                showFeatureTourModal(context, activeTheme);
+              },
             ),
           ),
           const SizedBox(height: 24),
